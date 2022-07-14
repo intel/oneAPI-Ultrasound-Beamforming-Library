@@ -1,14 +1,18 @@
 # oneAPI-Ultrasound-Beamforming-Library
 
-This project contains 2 ultrasound software beamforming samples, which process ultrasound raw data into images human readable. The project use Intel oneAPI to do computation acceleration with Intel GPU and FPGA. The functions are developed based on Supra(https://github.com/IFL-CAMP/supra).
+This project contains 2 ultrasound software beamforming samples, which process ultrasound raw data into images human readable. The project use Intel oneAPI to do computation acceleration with Intel GPU and FPGA. 
+
+![image](Images/workflow-of-beamforming.png)
+
+This project is focusing on the kernel functions, including Receive Beamforming, Envelope Detection, Log Compression and Scan Conversion. The kernel functions are developed based on Supra(https://github.com/IFL-CAMP/supra). We have released a project for migrating origial Supra CUDA code to standard DPC++. For more details, please refer to: https://github.com/intel/supra-on-oneapi. 
 
 ![image](Images/Migration-supra-to-oneapi-platform.png)
 
-Using oneAPI toolkit -- Intel® DPC++ Compatibility Tool to implement the migration from CUDA to standard DPC++ has been released. For more details, please refer to: https://github.com/intel/supra-on-oneapi. The purpose of this project is for extracting and rewriting the kernel code for easily utilization and running on Intel xPU devices.
+The purpose of this project is for extracting and rewriting the kernel code for easily utilization and running on Intel xPU devices including GPU and FPGA.
 
 ## 1. Host Development System
 
-The preferred (and tested) development host platform is PC with Ubuntu 18.04. The PC could have a graphics processor, a discrete graphics card, or an Intel FPGA. 
+The preferred (and tested) development host platform is PC with Ubuntu 18.04 & 20.04. The PC could have a graphics processor, a discrete graphics card, or an Intel FPGA. 
 
 Intel CPU with Intel integrated and discrete GPU, and Intel FPGA as optional to be data producer. If FPGA is used to produce data for GPU, please install additional package for usage of FPGA. Please choose the version following your FPGA model type and refer to https://www.intel.com/content/www/us/en/developer/articles/release-notes/intel-oneapi-dpcpp-fpga-add-on-release-notes.html.
 
@@ -17,8 +21,6 @@ Also, Devcloud for OneAPI can be used for testing. Please refer to  https://devc
 This project has been tested on Intel® i7-8700K CPU with Intel(R) UHD Graphics 630 , please refer to https://ark.intel.com/content/www/us/en/ark/products/126684/intel-core-i7-8700k-processor-12m-cache-up-to-4-70-ghz.html.
 
 This project has been tested on Intel® i7-1165G7 CPU with Intel® Iris® Xe Graphics, please refer to https://ark.intel.com/content/www/us/en/ark/products/208662/intel-core-i71165g7-processor-12m-cache-up-to-4-70-ghz.html.
-
-This project has been tested on Intel® Iris® Xe MAX Graphics(DG1), please refer to https://ark.intel.com/content/www/us/en/ark/products/211013/intel-iris-xe-max-graphics-96-eu.html.
 
 This project has been tested on Intel® Programmable Acceleration Card with Intel Arria® 10 GX FPGA, please refer to https://www.intel.com/content/www/us/en/products/details/fpga/platforms/pac/arria-10-gx.html.
 
@@ -52,6 +54,8 @@ Default:
 
 ## 3. GPU lib code
 
+In real application scenarios, FPGA is often used to connect the ultrasound probe to collect data. So we simulated using FPGA as a data producer to provide data for GPU. Of course, a simple application is also provided to test software beamforming on the GPU. We have tested and valided data producer on Intel® Programmable Acceleration Card with Intel Arria® 10 GX FPGA.
+
 ### (1) Build
 
 Enter the project folder.
@@ -64,7 +68,7 @@ Create a directory `build` at the `gpu` directory:
 
     $ cd build
 
-If you want to test the GPU performance for easy testing, and use ZMC(Zero Memory Copy) feature is selected to use or not (which is set to use ZMC by default), run cmake using the command:
+In this repo, we just call the oneAPI feature to avoid moving data back and forth between host and device as ZMC(Zero memory copy, just an abbreviation to describe the feature in this repo). The detail of the feature could be found in https://www.intel.com/content/www/us/en/develop/documentation/oneapi-gpu-optimization-guide/top/memory/host-device-memory.html. And the feature is only used for Intel integrated GPU. If you want to test the GPU performance for easy testing, and using ZMC feature is selected to use or not (which is set to use ZMC by default), run cmake using the command:
 
     $ cmake .. -DUSE_ZMC=ON/OFF
 
@@ -84,7 +88,7 @@ If you want to use FPGA emulator, use the command:
 
     $ make fpga_emu -j4
 
-Note: ZMC(Zero Memory Copy) can be only used with Intel integrated GPU. Please switch USE_ZMC = OFF if using Intel discrete graphics card (i.e. DG1, DG2 etc).
+Note: ZMC feature can be only used with Intel integrated GPU. Please switch USE_ZMC = OFF if using Intel discrete graphics card.
 ![image](Images/zmc.png)
 
 ### (2) Run the program
@@ -101,7 +105,7 @@ If just test the GPU performance for easy testing, run the command:
 
     $ src/easy_app data/linearProbe_IPCAI_128-2.mock data/linearProbe_IPCAI_128-2_0.raw
 
-Note: (if you run it on Intel DGx GPU, you need to run `export GC_EnableDPEmulation=1` before running above command)
+Note: (if you run it on Intel discrete GPU, you need to run `export GC_EnableDPEmulation=1` before running above command)
 
 If you compile an FPGA emulator version to test, run the command:
 
@@ -122,6 +126,7 @@ Visual `*.png` results are stored in current directory.
 
 ## 4. FPGA standalone lib code
 
+FPGA standalone lib code has been tested and valided on Intel® Programmable Acceleration Card with Intel Arria® 10 GX FPGA.
 ### (1) Build
 
 Enter the project folder.
@@ -183,6 +188,8 @@ Comsuming time of each kernel's calculation could be seen in the terminal.
 Visual `*.png` results are stored in current directory.
 
 ## 5. FPGA pipeline lib code
+
+FPGA standalone lib code has been tested and valided on Intel® Programmable Acceleration Card with Intel Arria® 10 GX FPGA. Pipelining the kernels can improve the efficiency and performance of the beamforming algorithm on FPGAs. You can refer to the link to learn more about oneAPI dpcpp optimization on Intel FPGA. https://software.intel.com/content/dam/develop/external/us/en/documents/oneapi-dpcpp-fpga-optimization-guide.pdf
 
 ![image](Images/pipe_analysis.png)
 
