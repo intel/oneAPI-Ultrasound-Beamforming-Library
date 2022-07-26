@@ -25,6 +25,28 @@
 using namespace std;
 using namespace cl::sycl;
 
+int mkpath(std::string &s)
+{
+    size_t pre = 0;
+    size_t end = 0;
+    std::string sub;
+    int ret = 0;
+
+    if(s[s.size() - 1] != '/'){
+        s += '/';
+    }
+
+    while((end = s.find_first_of('/',pre)) != std::string::npos){
+        sub = s.substr(0, end);
+        pre = ++end;
+        if(sub.size()==0) continue;
+        if((ret = ::mkdir(sub.c_str(), 0755)) && errno!=EEXIST){
+            return ret;
+        }
+    }
+    return ret;
+}
+
 void stb_write_img_u16_t(const std::string img_name, size_t h, size_t w,
                          uint16_t *&r_input, uint16_t *&g_input,
                          uint16_t *&b_input) {

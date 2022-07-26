@@ -19,6 +19,16 @@ int main(int argc, char **argv) {
   const char *fileparam = argv[1];
   const char *filein = argv[2];
 
+  string fileout("./res");
+
+  if(argc == 4)
+  {
+    string file_out(argv[3]);
+    fileout = file_out;
+  }
+
+  int mkdir = mkpath(fileout);
+
   auto property_list =
       cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
   sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
@@ -108,7 +118,7 @@ int main(int argc, char **argv) {
     beamformer.SubmitKernel(ptr[i % n_shm], raw_len);
 
 #if SAVE_IMG
-    std::string file_path1 = "frame_bf_" + std::to_string(num_run) + ".png";
+    std::string file_path1 = fileout + "/frame_bf_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.getResHost());
 #endif
 
@@ -116,7 +126,7 @@ int main(int argc, char **argv) {
     hilbertenvelope.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path2 = "frame_he_" + std::to_string(num_run) + ".png";
+    std::string file_path2 = fileout + "/frame_he_" + std::to_string(num_run) + ".png";
     SaveImage(file_path2, hilbertenvelope.getResHost());
 #endif
 
@@ -124,14 +134,14 @@ int main(int argc, char **argv) {
     logcompressor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path3 = "frame_lc_" + std::to_string(num_run) + ".png";
+    std::string file_path3 = fileout + "/frame_lc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path3, logcompressor.getResHost());
 #endif
     scanconvertor.getInput(logcompressor.getRes());
     scanconvertor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path4 = "frame_sc_" + std::to_string(num_run) + ".png";
+    std::string file_path4 = fileout + "/frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage1(file_path4, scanconvertor.getResHost());
 #endif
     num_run++;

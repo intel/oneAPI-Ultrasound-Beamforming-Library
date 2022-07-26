@@ -17,6 +17,18 @@ int main(int argc, char **argv) {
   const char *fileparam = argv[1];
   const char *filein = argv[2];
 
+  const char *fileparam = argv[1];
+  const char *filein = argv[2];
+  string fileout("./res");
+
+  if(argc == 4)
+  {
+    string file_out(argv[3]);
+    fileout = file_out;
+  }
+
+  int mkdir = mkpath(fileout);
+
 #if FPGA_EMULATOR
   ext::intel::fpga_emulator_selector device_selector;
 #else
@@ -76,16 +88,16 @@ int main(int argc, char **argv) {
     scanconvertor.e.wait();
     Report_time(std::string("scanconvertor kernel: "), scanconvertor.e);
 
-    std::string file_path1 = "frame_bf_" + std::to_string(num_run) + ".png";
+    std::string file_path1 = fileout + "frame_bf_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.getResHost());
 
-    std::string file_path2 = "frame_he_" + std::to_string(num_run) + ".png";
+    std::string file_path2 = fileout + "frame_he_" + std::to_string(num_run) + ".png";
     SaveImage(file_path2, hilbertenvelope.getResHost());
 
-    std::string file_path3 = "frame_lc_" + std::to_string(num_run) + ".png";
+    std::string file_path3 = fileout + "frame_lc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path3, logcompressor.getResHost());
 
-    std::string file_path4 = "frame_sc_" + std::to_string(num_run) + ".png";
+    std::string file_path4 = fileout + "frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage1(file_path4, scanconvertor.getResHost());
 
     num_run++;
