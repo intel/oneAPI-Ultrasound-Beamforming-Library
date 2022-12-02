@@ -1,12 +1,9 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
 #ifndef __LOGCOMPRESSOR_H__
 #define __LOGCOMPRESSOR_H__
 
 #include <CL/sycl.hpp>
 #include <memory>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 using namespace sycl;
 

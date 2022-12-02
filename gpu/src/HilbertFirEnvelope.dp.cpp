@@ -1,6 +1,3 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
 #include "HilbertFirEnvelope.h"
 
 const int H_VEC_SIZE = 4;

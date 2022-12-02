@@ -1,6 +1,3 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
 #ifndef ULTRASOUND_H
 #define ULTRASOUND_H
 
@@ -10,9 +7,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "utility.hpp"
+#include <iomanip>
+#include "ultrasound_utility.h"
 
 using namespace std;
+
+#define USE_ZMC 1
 
 class Beamforming2D {
  public:
@@ -52,8 +52,8 @@ class Beamforming2D {
 
   float *s_dev;
 
-  uint Width;
-  uint Height;
+  uint32_t Width;
+  uint32_t Height;
 
   size_t numElements;
   size_t numReceivedChannels;
@@ -63,10 +63,10 @@ class Beamforming2D {
   size_t rxNumDepths;
   vec2s scanlineLayout;
   vec2s elementLayout;
-  double depth;
-  double samplingFrequency;
-  double speedOfSoundMMperS;
-  double dt;
+  float depth;
+  float samplingFrequency;
+  float speedOfSoundMMperS;
+  float dt;
 
   int additionalOffset;
   float fNumber;

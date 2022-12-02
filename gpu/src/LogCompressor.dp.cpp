@@ -1,12 +1,5 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
-
 #include <CL/sycl.hpp>
 #include "LogCompressor.h"
-#include "utility.hpp"
 
 #include <cmath>
 

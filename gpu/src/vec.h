@@ -14,7 +14,6 @@
 
 #include <CL/sycl.hpp>
 #include <cmath>
-#include <dpct/dpct.hpp>
 
 #ifndef M_PI
 /// Definition of pi for the cuda compile path, as cuda math.h does not seem to
@@ -22,7 +21,7 @@
 constexpr auto M_PI = 3.14159265358979323846;
 #endif  //! M_PI
 /// Definition of eps following the value of matlabs "eps()"
-constexpr double M_EPS = 2.2204e-16;
+constexpr float M_EPS = 2.2204e-16;
 template <typename ElementType>
 struct vec2T;
 template <typename ElementType>
@@ -129,12 +128,12 @@ typedef vec3T<float> vec3f;
 /// Single precision four-vector
 typedef vec4T<float> vec4f;
 
-/// Double precision two-vector
-typedef vec2T<double> vec2d;
-/// Double precision three-vector
-typedef vec3T<double> vec3d;
-/// Double precision four-vector
-typedef vec4T<double> vec4d;
+/// float precision two-vector
+typedef vec2T<float> vec2d;
+/// float precision three-vector
+typedef vec3T<float> vec3d;
+/// float precision four-vector
+typedef vec4T<float> vec4d;
 
 /// Integer two-vector
 typedef vec2T<int> vec2i;
@@ -150,28 +149,28 @@ typedef vec3T<size_t> vec3s;
 /// size_t four-vector
 typedef vec4T<size_t> vec4s;
 
-/// Double precision two-vector
+/// float precision two-vector
 typedef vec2d vec2;
-/// Double precision three-vector
+/// float precision three-vector
 typedef vec3d vec3;
-/// Double precision four-vector
+/// float precision four-vector
 typedef vec4d vec4;
 
-/// Double precision three-vector
+/// float precision three-vector
 typedef vec3 vec;
 
 /// Single precision rectangle
 typedef rect2T<float> rect2f;
-/// Double precision rectangle
-typedef rect2T<double> rect2d;
+/// float precision rectangle
+typedef rect2T<float> rect2d;
 /// Integer rectangle
 typedef rect2T<int> rect2i;
 /// size_t rectangle
 typedef rect2T<size_t> rect2s;
 
-/// Double precision rectangle
+/// float precision rectangle
 typedef rect2d rect2;
-/// Double precision rectangle
+/// float precision rectangle
 typedef rect2 rect;
 
 /// Element-wise sum of a two-vector and a scalar
@@ -257,12 +256,12 @@ inline vec2T<Ta> round(const vec2T<Ta>& a) {
 /// Element-wise floor of a two-vector
 template <typename Ta>
 inline vec2T<Ta> floor(const vec2T<Ta>& a) {
-  return {sycl::floor((double)(a.x)), sycl::floor((double)(a.y))};
+  return {sycl::floor((float)(a.x)), sycl::floor((float)(a.y))};
 }
 /// Element-wise ceil of a two-vector
 template <typename Ta>
 inline vec2T<Ta> ceil(const vec2T<Ta>& a) {
-  return {sycl::ceil((double)(a.x)), sycl::ceil((double)(a.y))};
+  return {sycl::ceil((float)(a.x)), sycl::ceil((float)(a.y))};
 }
 /// Element-wise minimum of two-vectors
 template <typename Ta>
@@ -377,14 +376,14 @@ inline vec3T<Ta> round(const vec3T<Ta>& a) {
 /// Element-wise floor of a three-vector
 template <typename Ta>
 inline vec3T<Ta> floor(const vec3T<Ta>& a) {
-  return {sycl::floor((double)(a.x)), sycl::floor((double)(a.y)),
-          sycl::floor((double)(a.z))};
+  return {sycl::floor((float)(a.x)), sycl::floor((float)(a.y)),
+          sycl::floor((float)(a.z))};
 }
 /// Element-wise ceil of a three-vector
 template <typename Ta>
 inline vec3T<Ta> ceil(const vec3T<Ta>& a) {
-  return {sycl::ceil((double)(a.x)), sycl::ceil((double)(a.y)),
-          sycl::ceil((double)(a.z))};
+  return {sycl::ceil((float)(a.x)), sycl::ceil((float)(a.y)),
+          sycl::ceil((float)(a.z))};
 }
 
 /// Element-wise minimum of three-vectors
@@ -402,7 +401,7 @@ inline vec3T<Ta> max(const vec3T<Ta>& a, const vec3T<Ta>& b) {
 /// Spherical Linear Interpolation (SLERP) of two three-vectors
 template <typename T>
 vec3T<T> inline slerp3(const vec3T<T>& a, const vec3T<T>& b, const T& t) {
-  T omega = sycl::acos((double)(dot(a, b)));
+  T omega = sycl::acos((float)(dot(a, b)));
   if (omega < M_EPS) {
     return a;
   }

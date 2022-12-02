@@ -1,12 +1,8 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
 #include "BeamForming.h"
 #include "HilbertFirEnvelope.h"
 #include "LogCompressor.h"
 #include "ScanConverter.h"
-#include "shm.h"
-#include "sycl_help.hpp"
+#include "sycl_help.h"
 
 using namespace std;
 using namespace sycl;
@@ -15,20 +11,13 @@ const size_t raw_len = 128 * 64 * 2337;
 
 #define SAVE_IMG 1
 
+const char* fileparam = "linearProbe_IPCAI_128-2.mock";
+const char* filein = "linearProbe_IPCAI_128-2_0.raw";
+
 int main(int argc, char **argv) {
-  const char *fileparam = argv[1];
-  const char *filein = argv[2];
-
-  string fileout("./res");
-
-  if(argc == 4)
-  {
-    string file_out(argv[3]);
-    fileout = file_out;
-  }
-
-  int mkdir = mkpath(fileout);
-
+  /*const char *fileparam = argv[1];
+  const char *filein = argv[2];*/
+   
   auto property_list =
       cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
   sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
@@ -60,11 +49,12 @@ int main(int argc, char **argv) {
   size_t num_run = 0;
 
   for (size_t i = 0; i < 8; i++) {
+    std::cout << "submit beamforming kernel: " << i << "th.\n";
     beamformer.read_one_frame2dev(beamformer.RFdata + raw_len * i, raw_len);
     beamformer.SubmitKernel(beamformer.RFdata + raw_len * i, raw_len);
 
 #if SAVE_IMG
-    std::string file_path1 = fileout + "frame_bf_" + std::to_string(num_run) + ".png";
+    std::string file_path1 = "frame_bf_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.getResHost());
 #endif
 
@@ -72,7 +62,7 @@ int main(int argc, char **argv) {
     hilbertenvelope.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path2 = fileout + "frame_he_" + std::to_string(num_run) + ".png";
+    std::string file_path2 = "frame_he_" + std::to_string(num_run) + ".png";
     SaveImage(file_path2, hilbertenvelope.getResHost());
 #endif
 
@@ -80,15 +70,15 @@ int main(int argc, char **argv) {
     logcompressor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path3 = fileout + "frame_lc_" + std::to_string(num_run) + ".png";
+    std::string file_path3 = "frame_lc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path3, logcompressor.getResHost());
 #endif
 
-    scanconvertor.getInput(logcompressor.getRes());
-    scanconvertor.SubmitKernel();
+   scanconvertor.getInput(logcompressor.getRes());
+   scanconvertor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path4 = fileout + "frame_sc_" + std::to_string(num_run) + ".png";
+    std::string file_path4 = "frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage1(file_path4, scanconvertor.getResHost());
 #endif
 

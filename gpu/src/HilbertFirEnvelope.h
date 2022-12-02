@@ -1,15 +1,9 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
 #ifndef HILBERTFIRENVELOPE_H
 #define HILBERTFIRENVELOPE_H
 #pragma once
 
-// #include "ultrasound.h"
-
 #include <algorithm>
 #include <cmath>
-#include <dpct/dpct.hpp>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -18,7 +12,7 @@
 #include <vector>
 
 #include <CL/sycl.hpp>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 /// A factory for FIR filters
 class FirFilterFactory {

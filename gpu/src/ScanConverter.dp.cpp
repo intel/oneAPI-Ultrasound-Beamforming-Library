@@ -1,14 +1,7 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
-#include <oneapi/dpl/algorithm>
-#include <oneapi/dpl/execution>
-
 #include <CL/sycl.hpp>
 #include <cassert>
 #include <cmath>
 #include "ScanConverter.h"
-#include "utility.hpp"
 
 using namespace std;
 

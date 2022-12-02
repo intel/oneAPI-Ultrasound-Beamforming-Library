@@ -5,18 +5,18 @@
 //
 // @file sycl_help.hpp
 //==================================================
-#ifndef _SYCL_HELP_HPP_
-#define _SYCL_HELP_HPP_
+#ifndef __SYCL_HELP_HPP__
+#define __SYCL_HELP_HPP__
 
-#include "CL/sycl.hpp"
+#include <CL/sycl.hpp>
 
 // #include "dpc_common.hpp"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image/stb_image.h"
+#include "stb_image\stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image/stb_image_write.h"
+#include "stb_image\stb_image_write.h"
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image/stb_image_resize.h"
+#include "stb_image\stb_image_resize.h"
 
 #define SHOW_IMG_WIDTH 350
 #define SHOW_IMG_HEIGHT 400
@@ -24,28 +24,6 @@
 
 using namespace std;
 using namespace cl::sycl;
-
-int mkpath(std::string &s)
-{
-    size_t pre = 0;
-    size_t end = 0;
-    std::string sub;
-    int ret = 0;
-
-    if(s[s.size() - 1] != '/'){
-        s += '/';
-    }
-
-    while((end = s.find_first_of('/',pre)) != std::string::npos){
-        sub = s.substr(0, end);
-        pre = ++end;
-        if(sub.size()==0) continue;
-        if((ret = ::mkdir(sub.c_str(), 0755)) && errno!=EEXIST){
-            return ret;
-        }
-    }
-    return ret;
-}
 
 void stb_write_img_u16_t(const std::string img_name, size_t h, size_t w,
                          uint16_t *&r_input, uint16_t *&g_input,

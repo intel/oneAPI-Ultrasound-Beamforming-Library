@@ -1,27 +1,21 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
-#ifndef _UTILITY_
-#define _UTILITY_
+#ifndef _ULTRASOUND_UTILITY_
+#define _ULTRASOUND_UTILITY_
 
 #include <cmath>
 #include <iomanip>
 #include <limits>
 #include <string>
-#include "CL/sycl.hpp"
+#include <CL/sycl.hpp>
 #include "vec.h"
-
-using namespace std;
-using namespace cl::sycl;
 
 #define __FLT_MAX__ 3.40282347e+38F
 #define FLT_MAX __FLT_MAX__
 
-static void Report_time(const std::string& msg, sycl::event& e) {
-  auto time_start =
+static void Report_time(const std::string& msg, sycl::event e) {
+  cl::sycl::cl_ulong time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 
-  auto time_end =
+  cl::sycl::cl_ulong time_end =
       e.get_profiling_info<sycl::info::event_profiling::command_end>();
 
   double elapsed = (time_end - time_start) / 1e6;
@@ -82,8 +76,8 @@ class LimitProxy<uint8_t> {
 
 template <typename ResultType, typename InputType>
 ResultType clampCast(const InputType& x) {
-  return static_cast<ResultType>(sycl::min(
-      sycl::max(x, static_cast<InputType>(LimitProxy<ResultType>::min())),
+  return static_cast<ResultType>(std::min(
+      std::max(x, static_cast<InputType>(LimitProxy<ResultType>::min())),
       static_cast<InputType>(LimitProxy<ResultType>::max())));
 }
 
@@ -96,29 +90,23 @@ struct clampCaster {
 
 class ScanlineRxParameters3D {
  public:
-  ScanlineRxParameters3D()
-      : txParameters{{{0, 0}, {0, 0}, 0, 0}},
-        position{0.0, 0.0, 0.0},
-        direction{0.0, 0.0, 0.0},
-        maxElementDistance{0.0, 0.0} {}
-
   struct TransmitParameters {
     vec2T<uint16_t> firstActiveElementIndex;  // index of the first active
                                               // transducer element
     vec2T<uint16_t>
         lastActiveElementIndex;  // index of the last active transducer element
     uint16_t txScanlineIdx;      // index of the corresponsing transmit scanline
-    double
+    float
         initialDelay;  // the minmal delay in [s] that is to be used during rx
   };
 
   vec3 position;        // the position of the scanline
   vec3 direction;       // direction of the scanline
-  double txWeights[4];  // Weights for interpolation between different transmits
+  float txWeights[4];  // Weights for interpolation between different transmits
   TransmitParameters txParameters[4];  // Parameters of the transmits to use
   vec2 maxElementDistance;
 
-  vec3 getPoint(double depth) const { return position + depth * direction; }
+  vec3 getPoint(float depth) const { return (position + depth * direction); }
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const ScanlineRxParameters3D& params);

@@ -1,13 +1,10 @@
-// Copyright (C) 2022 Intel Corporation
-// SPDX-License-Identifier: LGPL-2.1-or-later
-
 #ifndef __SCANCONVERTER_H__
 #define __SCANCONVERTER_H__
 
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 class ScanConverter {
  public:
