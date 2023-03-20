@@ -483,27 +483,29 @@ Beamforming2D::Beamforming2D() {
 }
 
 Beamforming2D::~Beamforming2D() {
-  free(rxScanlines);
-  free(rxDepths);
-  free(rxElementXs);
-  free(rxElementYs);
-  free(window_data);
-  free(RFdata);
-  free(s);
-  free(s_tmp);
-  free(RFdata_shuffle);
-  free(rxScanlines_dev, q);
-  free(rxDepths_dev, q);
-  free(rxElementXs_dev, q);
-  free(rxElementYs_dev, q);
-  free(window_data_dev, q);
-  free(RFdata_dev, q);
-  free(RFdata_dev1, q);
-  free(s_dev, q);
-  free(m_mask, q);
-  free(m_sampleIdx, q);
-  free(m_weightX, q);
-  free(m_weightY, q);
+  if (rxScanlines) free(rxScanlines);
+  if (rxDepths) free(rxDepths);
+  if (rxElementXs) free(rxElementXs);
+  if (rxElementYs) free(rxElementYs);
+  if (window_data) free(window_data);
+  if (RFdata) free(RFdata);
+  if (s) free(s);
+  if (s_tmp) free(s_tmp);
+  if (RFdata_shuffle) free(RFdata_shuffle);
+  if (RFdata_shuffle_s1) free(RFdata_shuffle_s1);
+  if (RFdata_shuffle_s2) free(RFdata_shuffle_s2);
+  if (rxScanlines_dev) sycl::free(rxScanlines_dev, q);
+  if (rxDepths_dev) sycl::free(rxDepths_dev, q);
+  if (rxElementXs_dev) sycl::free(rxElementXs_dev, q);
+  if (rxElementYs_dev) sycl::free(rxElementYs_dev, q);
+  if (window_data_dev) sycl::free(window_data_dev, q);
+
+  if (m_mask) sycl::free(m_mask, q);
+  if (m_sampleIdx) sycl::free(m_sampleIdx, q);
+  if (m_weightX) sycl::free(m_weightX, q);
+  if (m_weightY) sycl::free(m_weightY, q);
+  if (RFdata_dev) sycl::free(RFdata_dev, q);
+  if (s_dev) sycl::free(s_dev, q);
 }
 
 int Beamforming2D::GetInputImage(const char *Paramfilename,
@@ -810,6 +812,11 @@ int Beamforming2D::copy_data2dev() {
   RFdata_dev1 = (unsigned char *)sycl::malloc_device(
       numReceivedChannels * numSamples * numTxScanlines * sizeof(unsigned char),
       q);
+  RFdata_shuffle = (int16_t *)malloc(len * sizeof(int16_t));
+  RFdata_shuffle_s1 = (unsigned char *)malloc(len * sizeof(unsigned char));
+  RFdata_shuffle_s2 = (unsigned char *)malloc(len * sizeof(unsigned char));
+
+  s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
 
   return 1;
 }
@@ -819,21 +826,16 @@ int Beamforming2D::read_one_frame2dev(int16_t *raw_ptr, size_t len) {
     std::cout << "Error raw data frame size.\n";
     return 0;
   }
-  RFdata_shuffle = (int16_t *)malloc(len * sizeof(int16_t));
   shuffle_RF_order<int16_t>(RFdata_shuffle, raw_ptr);
-  auto RFdata_shuffle1 = (unsigned char *)malloc(len * sizeof(unsigned char));
-  auto RFdata_shuffle2 = (unsigned char *)malloc(len * sizeof(unsigned char));
 
   for (size_t i = 0; i < len; i++) {
-    RFdata_shuffle1[i] = (unsigned char)((RFdata_shuffle[i] >> 8) & 0xff);
-    RFdata_shuffle2[i] = (unsigned char)(RFdata_shuffle[i] & 0xff);
+    RFdata_shuffle_s1[i] = (unsigned char)((RFdata_shuffle[i] >> 8) & 0xff);
+    RFdata_shuffle_s2[i] = (unsigned char)(RFdata_shuffle[i] & 0xff);
   }
 
-  q.memcpy(RFdata_dev, RFdata_shuffle1, len * sizeof(unsigned char)).wait();
-  q.memcpy(RFdata_dev1, RFdata_shuffle2, len * sizeof(unsigned char)).wait();
+  q.memcpy(RFdata_dev, RFdata_shuffle_s1, len * sizeof(unsigned char)).wait();
+  q.memcpy(RFdata_dev1, RFdata_shuffle_s2, len * sizeof(unsigned char)).wait();
 
-  delete RFdata_shuffle1;
-  delete RFdata_shuffle2;
   return 1;
 }
 
@@ -842,7 +844,6 @@ sycl::queue Beamforming2D::getStream() { return q; }
 float *Beamforming2D::getRes() { return s_tmp; }
 
 float *Beamforming2D::getResHost() {
-  s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
   q.memcpy(s_tmp, s_dev, rxNumDepths * numRxScanlines * sizeof(float)).wait();
 
   shuffle_image<float>(s, s_tmp);
@@ -857,6 +858,7 @@ HilbertFirEnvelope::HilbertFirEnvelope(sycl::queue hq, float *input_addr)
   output = (float *)malloc(m_numScanlines * m_numSamples * sizeof(float));
   output_dev = (float *)sycl::malloc_device(
       m_numScanlines * m_numSamples * sizeof(float), q);
+  output_tmp = (float *)malloc(2000 * 255 * sizeof(float));
   prepareFilter();
 }
 
@@ -895,9 +897,8 @@ float *HilbertFirEnvelope::getResHost() {
 HilbertFirEnvelope::~HilbertFirEnvelope()
 {
   if(m_hilbertFilter) free(m_hilbertFilter);
-  if(m_hilbertFilter_dev) free(m_hilbertFilter_dev, q);
-  if(input_dev) free(input_dev, q);
-  if(output_dev) free(output_dev, q);
+  if(m_hilbertFilter_dev) sycl::free(m_hilbertFilter_dev, q);
+  if(output_dev) sycl::free(output_dev, q);
   if(output_tmp) free(output_tmp);
   if(output) free(output);
 }
@@ -924,16 +925,21 @@ struct thrustLogcompress {
 
 LogCompressor::LogCompressor(float *input, sycl::queue in_q)
     : q(in_q), input_dev(input) {
+  output = (float *)malloc(width * height * depth * sizeof(float));
+  output_dev =
+      (float *)sycl::malloc_device(width * height * depth * sizeof(float), q);
   output_tmp = (float *)malloc(2000 * 255 * sizeof(float));
 }
 
 LogCompressor::LogCompressor(sycl::queue in_q) : q(in_q) {
+  output = (float *)malloc(width * height * depth * sizeof(float));
+  output_dev =
+      (float *)sycl::malloc_device(width * height * depth * sizeof(float), q);
   output_tmp = (float *)malloc(2000 * 255 * sizeof(float));
 }
 
 LogCompressor::~LogCompressor() {
-  if (input_dev) free(input_dev, q);
-  if (output_dev) free(output_dev, q);
+  if (output_dev) sycl::free(output_dev, q);
   if (output) free(output);
   if (output_tmp) free(output_tmp);
 }
@@ -955,7 +961,15 @@ ScanConverter::ScanConverter(sycl::queue hq, uint8_t* mask,
       m_sampleIdx(sampleIdx),
       m_weightX(weightX),
       m_weightY(weightY),
-      m_imageSize(imageSize) {}
+      m_imageSize(imageSize) {
+  output_tmp = (float *)malloc(2000 * 1667 * sizeof(float));
+  output_dev = (float *)sycl::malloc_device(
+      m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(float), q);
+  output = (float *)malloc(m_imageSize.x * m_imageSize.y * m_imageSize.z *
+                                sizeof(float));
+  output_tmp = (float *)malloc(m_imageSize.x * m_imageSize.y * m_imageSize.z *
+                                sizeof(float));
+}
 
 uint8_t *ScanConverter::getMask() { return m_mask; }
 
@@ -964,7 +978,6 @@ void ScanConverter::SubmitKernel() { convert2D<float, float>(); }
 float *ScanConverter::getRes() { return output_dev; }
 float *ScanConverter::getResHost() 
 {
-  output_tmp = (float *)malloc(2000 * 1667 * sizeof(float));
   q.memcpy(output_tmp, output_dev, 2000 * 1667 * sizeof(float)).wait();
   shuffle_image(output, output_tmp, 1667, 2000);
 
@@ -972,7 +985,6 @@ float *ScanConverter::getResHost()
 }
 
 ScanConverter::~ScanConverter(){
-  if (input_dev) free(input_dev, q);
   if (output_dev) free(output_dev, q);
   if (output) free(output);
   if (output_tmp) free(output_tmp);
@@ -1334,10 +1346,6 @@ void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
       sycl::pow<double>(10, (dynamicRange / 20)), static_cast<float>(inMax),
       outMax, scale);
 
-  output = (float *)malloc(width * height * depth * sizeof(float));
-  output_dev =
-      (float *)sycl::malloc_device(width * height * depth * sizeof(float), q);
-
   auto inImageData_t = inImageData;
   auto pComprGpu_t = output_dev;
 
@@ -1450,13 +1458,6 @@ void ScanConverter::convert2D() {
   vec2s scanlineLayout = {255, 1};
   uint32_t numSamples = 2000;
   m_imageSize = {1667, 2000, 1};
-
-  output_dev = (OutputType *)sycl::malloc_device(
-      m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
-  output = (OutputType *)malloc(m_imageSize.x * m_imageSize.y * m_imageSize.z *
-                                sizeof(OutputType));
-  output_tmp = (OutputType *)malloc(m_imageSize.x * m_imageSize.y * m_imageSize.z *
-                                sizeof(OutputType));
 
   auto pConv = output_dev;
 

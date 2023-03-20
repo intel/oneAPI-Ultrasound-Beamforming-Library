@@ -77,6 +77,8 @@ class Beamforming2D {
   float *window_data;
   int16_t *RFdata;
   int16_t *RFdata_shuffle;
+  int16_t *RFdata_shuffle_s1;
+  int16_t *RFdata_shuffle_s2;
   float *s;
 
   float *rxDepths_dev;

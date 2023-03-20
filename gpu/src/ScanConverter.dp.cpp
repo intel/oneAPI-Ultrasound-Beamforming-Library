@@ -266,7 +266,12 @@ ScanConverter::ScanConverter(sycl::queue hq, uint8_t *mask,
       m_sampleIdx(sampleIdx),
       m_weightX(weightX),
       m_weightY(weightY),
-      m_imageSize(imageSize) {}
+      m_imageSize(imageSize) {
+  output_dev = (OutputType *)sycl::malloc_device(
+    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
+  output = (OutputType *)sycl::malloc_host(
+    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
+}
 
 void ScanConverter::getInput(float *input){
   input_dev = input;
@@ -285,11 +290,6 @@ void ScanConverter::convert2D() {
   m_imageSize = {1667, 2000, 1};
 
   InputType *pScanlineData = inImage;
-
-  output_dev = (OutputType *)sycl::malloc_device(
-      m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
-  output = (OutputType *)sycl::malloc_host(
-      m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
 
   auto pConv = output_dev;
 
@@ -326,19 +326,16 @@ void ScanConverter::convert2D() {
   });
 
   scan_event.wait();
-  q.memcpy(output, output_dev, m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType)).wait();
   Report_time(std::string("ScanConvertor kernel: "), scan_event);
 }
 
 float *ScanConverter::getRes() { return output_dev; }
 float *ScanConverter::getResHost() {
-  
+  q.memcpy(output, output_dev, m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType)).wait();
   return output;
 }
 
 ScanConverter::~ScanConverter() {
-  if (output_dev) 
-    sycl::free(output_dev, q);
-  if (output) 
-    sycl::free(output, q);
+  if (output_dev) sycl::free(output_dev, q);
+  if (output) sycl::free(output, q);
 }

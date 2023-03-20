@@ -159,6 +159,9 @@ int main(int argc, char *argv[]) {
 
   clean_up_shm_sem();
 
+  if(fpga_ptr) sycl::free(fpga_ptr, q);
+  if(raw_ptr) free(raw_ptr);
+
   return 0;
 }
 

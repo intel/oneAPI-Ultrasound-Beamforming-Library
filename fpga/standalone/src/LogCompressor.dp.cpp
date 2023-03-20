@@ -88,7 +88,6 @@ void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
   q.wait();
   log_event.wait();
   Report_time(std::string("LogCompressor kernel: "), log_event);
-  q.memcpy(output, output_dev, width * height * depth * sizeof(float)).wait();
 }
 
 void LogCompressor::SubmitKernel() {
@@ -108,7 +107,10 @@ void LogCompressor::SubmitKernel() {
 
 float* LogCompressor::getRes() { return output_dev; }
 
-float* LogCompressor::getResHost() { return output; }
+float* LogCompressor::getResHost() {
+  q.memcpy(output, output_dev, width * height * depth * sizeof(float)).wait();
+  return output;
+}
 
 LogCompressor::~LogCompressor() {
   if (output_dev) free(output_dev, q);

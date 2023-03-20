@@ -13,6 +13,8 @@ using namespace std;
 
 const size_t raw_len = 128 * 64 * 2337;
 
+#define SAVE_IMG 1
+
 int main(int argc, char **argv) {
   const char *fileparam = argv[1];
   const char *filein = argv[2];
@@ -88,6 +90,7 @@ int main(int argc, char **argv) {
     scanconvertor.e.wait();
     Report_time(std::string("scanconvertor kernel: "), scanconvertor.e);
 
+#if SAVE_IMG
     std::string file_path1 = fileout + "frame_bf_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.getResHost());
 
@@ -99,6 +102,7 @@ int main(int argc, char **argv) {
 
     std::string file_path4 = fileout + "frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage1(file_path4, scanconvertor.getResHost());
+#endif
 
     num_run++;
 
