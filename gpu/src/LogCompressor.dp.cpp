@@ -98,7 +98,7 @@ void LogCompressor::SubmitKernel() {
 float* LogCompressor::getRes() { return output_dev; }
 
 float* LogCompressor::getResHost() {
-  q.memcpy(output, output_dev, width * height * depth * sizeof(float)).wait();
+  q.memcpy(output, output_dev, 255 * 2000 * sizeof(float)).wait();
   return output;
 }
 

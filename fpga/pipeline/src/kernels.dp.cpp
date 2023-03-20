@@ -551,8 +551,8 @@ int Beamforming2D::GetInputImage(const char *Paramfilename,
 
   // read input data file
   ifstream rf(Inputfilename, ios::in | ios::binary);
-  int valid_bytes =
-      numReceivedChannels * numSamples * numTxScanlines * sizeof(int16_t);
+  int len = numReceivedChannels * numSamples * numTxScanlines;
+  int valid_bytes = len * sizeof(int16_t);
   RFdata = (int16_t *)malloc(valid_bytes * 8);
   rf.read((char *)RFdata, valid_bytes * 8);
   rf.close();
@@ -764,6 +764,22 @@ int Beamforming2D::GetInputImage(const char *Paramfilename,
   delete weightX_shuffle;
   delete weightY_shuffle;
 
+  s_dev = (float *)sycl::malloc_device(
+      rxNumDepths * numRxScanlines * sizeof(float), q);
+  s = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
+
+  RFdata_dev = (unsigned char *)sycl::malloc_device(
+      numReceivedChannels * numSamples * numTxScanlines * sizeof(unsigned char),
+      q);
+  RFdata_dev1 = (unsigned char *)sycl::malloc_device(
+      numReceivedChannels * numSamples * numTxScanlines * sizeof(unsigned char),
+      q);
+  RFdata_shuffle = (int16_t *)malloc(len * sizeof(int16_t));
+  RFdata_shuffle_s1 = (unsigned char *)malloc(len * sizeof(unsigned char));
+  RFdata_shuffle_s2 = (unsigned char *)malloc(len * sizeof(unsigned char));
+
+  s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
+
   return 1;
 }
 
@@ -801,22 +817,6 @@ int Beamforming2D::copy_data2dev() {
   q.memcpy(rxScanlines_dev, rxScanlines,
            numRxScanlines * sizeof(ScanlineRxParameters3D))
       .wait();
-
-  s_dev = (float *)sycl::malloc_device(
-      rxNumDepths * numRxScanlines * sizeof(float), q);
-  s = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
-
-  RFdata_dev = (unsigned char *)sycl::malloc_device(
-      numReceivedChannels * numSamples * numTxScanlines * sizeof(unsigned char),
-      q);
-  RFdata_dev1 = (unsigned char *)sycl::malloc_device(
-      numReceivedChannels * numSamples * numTxScanlines * sizeof(unsigned char),
-      q);
-  RFdata_shuffle = (int16_t *)malloc(len * sizeof(int16_t));
-  RFdata_shuffle_s1 = (unsigned char *)malloc(len * sizeof(unsigned char));
-  RFdata_shuffle_s2 = (unsigned char *)malloc(len * sizeof(unsigned char));
-
-  s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
 
   return 1;
 }
@@ -925,16 +925,16 @@ struct thrustLogcompress {
 
 LogCompressor::LogCompressor(float *input, sycl::queue in_q)
     : q(in_q), input_dev(input) {
-  output = (float *)malloc(width * height * depth * sizeof(float));
+  output = (float *)malloc(2000 * 255 * sizeof(float));
   output_dev =
-      (float *)sycl::malloc_device(width * height * depth * sizeof(float), q);
+      (float *)sycl::malloc_device(2000 * 255 * sizeof(float), q);
   output_tmp = (float *)malloc(2000 * 255 * sizeof(float));
 }
 
 LogCompressor::LogCompressor(sycl::queue in_q) : q(in_q) {
-  output = (float *)malloc(width * height * depth * sizeof(float));
+  output = (float *)malloc(2000 * 255 * sizeof(float));
   output_dev =
-      (float *)sycl::malloc_device(width * height * depth * sizeof(float), q);
+      (float *)sycl::malloc_device(2000 * 255 * sizeof(float), q);
   output_tmp = (float *)malloc(2000 * 255 * sizeof(float));
 }
 

@@ -985,7 +985,7 @@ int Beamforming2D::copy_data2dev() {
   s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
   s = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
 
-  RFdata_shuffle = (int16_t *)malloc(len * sizeof(int16_t));
+  RFdata_shuffle = (int16_t *)malloc(numReceivedChannels * numSamples * numTxScanlines * sizeof(int16_t));
 
   RFdata_dev = (int16_t *)sycl::malloc_device(
       numReceivedChannels * numSamples * numTxScanlines * sizeof(int16_t), q);

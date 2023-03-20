@@ -18,9 +18,6 @@ const size_t raw_len = 128 * 64 * 2337;
 int main(int argc, char **argv) {
   const char *fileparam = argv[1];
   const char *filein = argv[2];
-
-  const char *fileparam = argv[1];
-  const char *filein = argv[2];
   string fileout("./res");
 
   if(argc == 4)
