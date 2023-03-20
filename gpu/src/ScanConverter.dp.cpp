@@ -267,10 +267,10 @@ ScanConverter::ScanConverter(sycl::queue hq, uint8_t *mask,
       m_weightX(weightX),
       m_weightY(weightY),
       m_imageSize(imageSize) {
-  output_dev = (OutputType *)sycl::malloc_device(
-    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
-  output = (OutputType *)sycl::malloc_host(
-    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType), q);
+  output_dev = (float *)sycl::malloc_device(
+    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(float), q);
+  output = (float *)sycl::malloc_host(
+    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(float), q);
 }
 
 void ScanConverter::getInput(float *input){

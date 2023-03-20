@@ -34,9 +34,9 @@ struct thrustLogcompress {
 
 LogCompressor::LogCompressor(float* input, sycl::queue in_q)
     : q(in_q), input_dev(input) {
-  output = (float*)sycl::malloc_host(width * height * depth * sizeof(float), q);
+  output = (float*)sycl::malloc_host(2000 * 255 * sizeof(float), q);
   output_dev =
-    (float*)sycl::malloc_device(width * height * depth * sizeof(float), q);
+    (float*)sycl::malloc_device(2000 * 255 * sizeof(float), q);
 }
 
 LogCompressor::LogCompressor(sycl::queue in_q)

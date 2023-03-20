@@ -985,10 +985,7 @@ int Beamforming2D::GetInputImage(const char *Paramfilename,
   updateInternals(mask, weightX, weightY, sampleIdx, m_imageSize,
                   scanlineLayout, depth, origin_rxScanlines, rxNumDepths,
                   numRxScanlines);
-  return 1;
-}
-
-int Beamforming2D::copy_data2dev() {  
+  
   m_mask = (uint8_t *)sycl::malloc_device(mask.size() * sizeof(uint8_t), q);
   m_sampleIdx =
       (uint32_t *)sycl::malloc_device(sampleIdx.size() * sizeof(uint32_t), q);
@@ -1001,6 +998,10 @@ int Beamforming2D::copy_data2dev() {
   q.memcpy(m_weightX, weightX.data(), weightX.size() * sizeof(float)).wait();
   q.memcpy(m_weightY, weightY.data(), weightY.size() * sizeof(float)).wait();
 
+  return 1;
+}
+
+int Beamforming2D::copy_data2dev() {
   rxDepths_dev = (float *)sycl::malloc_device(rxNumDepths * sizeof(float), q);
   if (rxDepths_dev == nullptr) {
     malloc_mem_log(std::string("rxDepths_dev"));
