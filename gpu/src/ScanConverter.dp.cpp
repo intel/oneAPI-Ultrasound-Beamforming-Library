@@ -331,7 +331,7 @@ void ScanConverter::convert2D() {
 
 float *ScanConverter::getRes() { return output_dev; }
 float *ScanConverter::getResHost() {
-  q.memcpy(output, output_dev, m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(OutputType)).wait();
+  q.memcpy(output, output_dev, m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(float)).wait();
   return output;
 }
 

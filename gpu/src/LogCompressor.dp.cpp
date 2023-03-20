@@ -40,7 +40,11 @@ LogCompressor::LogCompressor(float* input, sycl::queue in_q)
 }
 
 LogCompressor::LogCompressor(sycl::queue in_q)
-    : q(in_q){}
+    : q(in_q){
+  output = (float*)sycl::malloc_host(2000 * 255 * sizeof(float), q);
+  output_dev =
+    (float*)sycl::malloc_device(2000 * 255 * sizeof(float), q);
+}
 
 void LogCompressor::getInput(float *input){
   input_dev = input;
