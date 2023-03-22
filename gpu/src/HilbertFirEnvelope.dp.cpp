@@ -121,8 +121,8 @@ float* HilbertFirEnvelope::getResHost() {
 }
 
 HilbertFirEnvelope::~HilbertFirEnvelope() {
-  sycl::free(m_hilbertFilter, q);
-  sycl::free(m_hilbertFilter_dev, q);
-  sycl::free(output_dev, q);
-  sycl::free(output, q);
+  if(m_hilbertFilter) sycl::free(m_hilbertFilter, q);
+  if(m_hilbertFilter_dev) sycl::free(m_hilbertFilter_dev, q);
+  if(output_dev) sycl::free(output_dev, q);
+  if(output) sycl::free(output, q);
 }

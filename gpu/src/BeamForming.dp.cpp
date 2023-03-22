@@ -756,6 +756,12 @@ Beamforming2D::~Beamforming2D() {
   if (rxElementXs_dev) sycl::free(rxElementXs_dev, q);
   if (rxElementYs_dev) sycl::free(rxElementYs_dev, q);
   if (window_data_dev) sycl::free(window_data_dev, q);
+
+  if (m_mask) sycl::free(m_mask, q);
+  if (m_sampleIdx) sycl::free(m_sampleIdx, q);
+  if (m_weightX) sycl::free(m_weightX, q);
+  if (m_weightY) sycl::free(m_weightY, q);
+
 #ifndef USE_ZMC
   if (RFdata_dev) sycl::free(RFdata_dev, q);
 #else 
@@ -979,7 +985,7 @@ int Beamforming2D::GetInputImage(const char *Paramfilename,
   updateInternals(mask, weightX, weightY, sampleIdx, m_imageSize,
                   scanlineLayout, depth, origin_rxScanlines, rxNumDepths,
                   numRxScanlines);
-
+  
   m_mask = (uint8_t *)sycl::malloc_device(mask.size() * sizeof(uint8_t), q);
   m_sampleIdx =
       (uint32_t *)sycl::malloc_device(sampleIdx.size() * sizeof(uint32_t), q);

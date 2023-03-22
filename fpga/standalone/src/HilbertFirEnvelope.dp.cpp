@@ -91,6 +91,8 @@ HilbertFirEnvelope::HilbertFirEnvelope(sycl::queue hq)
   output = (float*)malloc(m_numScanlines * m_numSamples * sizeof(float));
   output_dev = (float*)sycl::malloc_device(
       m_numScanlines * m_numSamples * sizeof(float), q);
+  m_hilbertFilter_dev =
+      (float*)sycl::malloc_device(m_filterLength * sizeof(float), q);
   prepareFilter();
 }
 
@@ -102,9 +104,6 @@ void HilbertFirEnvelope::prepareFilter() {
   m_hilbertFilter = FirFilterFactory::createFilter<float>(
       m_filterLength, FirFilterFactory::FilterTypeHilbertTransformer,
       FirFilterFactory::FilterWindowHamming);
-
-  m_hilbertFilter_dev =
-      (float*)sycl::malloc_device(m_filterLength * sizeof(float), q);
 
   q.memcpy(m_hilbertFilter_dev, m_hilbertFilter, m_filterLength * sizeof(float))
       .wait();
@@ -133,18 +132,19 @@ void HilbertFirEnvelope::SubmitKernel() {
   e.wait();
 
   Report_time(std::string("HilbertFirEnvelope kernel: "), e);
-
-  q.memcpy(output, output_dev, m_numSamples * m_numScanlines * sizeof(float))
-      .wait();
 }
 
 float* HilbertFirEnvelope::getRes() { return output_dev; }
 
-float* HilbertFirEnvelope::getResHost() { return output; }
+float* HilbertFirEnvelope::getResHost() {
+  q.memcpy(output, output_dev, m_numSamples * m_numScanlines * sizeof(float))
+      .wait();
+  return output;
+}
 
 HilbertFirEnvelope::~HilbertFirEnvelope() {
   if(m_hilbertFilter) free(m_hilbertFilter);
-  if(m_hilbertFilter_dev) free(m_hilbertFilter_dev, q);
-  if(output_dev) free(output_dev, q);
+  if(m_hilbertFilter_dev) sycl::free(m_hilbertFilter_dev, q);
+  if(output_dev) sycl::free(output_dev, q);
   if(output) free(output);
 }

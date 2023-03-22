@@ -668,26 +668,27 @@ Beamforming2D::Beamforming2D() {
 }
 
 Beamforming2D::~Beamforming2D() {
-  free(rxScanlines);
-  free(rxDepths);
-  free(rxElementXs);
-  free(rxElementYs);
-  free(window_data);
-  free(RFdata);
-  free(s);
-  free(s_tmp);
-  free(RFdata_shuffle);
-  free(rxScanlines_dev, q);
-  free(rxDepths_dev, q);
-  free(rxElementXs_dev, q);
-  free(rxElementYs_dev, q);
-  free(window_data_dev, q);
-  free(RFdata_dev, q);
-  free(s_dev, q);
-  free(m_mask, q);
-  free(m_sampleIdx, q);
-  free(m_weightX, q);
-  free(m_weightY, q);
+  if (rxScanlines) free(rxScanlines);
+  if (rxDepths) free(rxDepths);
+  if (rxElementXs) free(rxElementXs);
+  if (rxElementYs) free(rxElementYs);
+  if (window_data) free(window_data);
+  if (RFdata) free(RFdata);
+  if (s) free(s);
+  if (s_tmp) free(s_tmp);
+  if (RFdata_shuffle) free(RFdata_shuffle);
+  if (rxScanlines_dev) sycl::free(rxScanlines_dev, q);
+  if (rxDepths_dev) sycl::free(rxDepths_dev, q);
+  if (rxElementXs_dev) sycl::free(rxElementXs_dev, q);
+  if (rxElementYs_dev) sycl::free(rxElementYs_dev, q);
+  if (window_data_dev) sycl::free(window_data_dev, q);
+
+  if (m_mask) sycl::free(m_mask, q);
+  if (m_sampleIdx) sycl::free(m_sampleIdx, q);
+  if (m_weightX) sycl::free(m_weightX, q);
+  if (m_weightY) sycl::free(m_weightY, q);
+  if (RFdata_dev) sycl::free(RFdata_dev, q);
+  if (s_dev) sycl::free(s_dev, q);
 }
 
 int Beamforming2D::GetInputImage(const char *Paramfilename,
@@ -979,21 +980,23 @@ int Beamforming2D::copy_data2dev() {
     malloc_mem_log(std::string("rxScanlines_dev"));
   }
 
+  s_dev = (float *)sycl::malloc_device(
+      rxNumDepths * numRxScanlines * sizeof(float), q);
+  s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
+  s = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
+
+  RFdata_shuffle = (int16_t *)malloc(numReceivedChannels * numSamples * numTxScanlines * sizeof(int16_t));
+
+  RFdata_dev = (int16_t *)sycl::malloc_device(
+      numReceivedChannels * numSamples * numTxScanlines * sizeof(int16_t), q);
+
   q.memcpy(rxDepths_dev, rxDepths, rxNumDepths * sizeof(float)).wait();
   q.memcpy(rxElementXs_dev, rxElementXs, numElements * sizeof(float)).wait();
   q.memcpy(rxElementYs_dev, rxElementYs, numElements * sizeof(float)).wait();
   q.memcpy(window_data_dev, window_data, numEntriesPerFunction * sizeof(float))
       .wait();
   q.memcpy(rxScanlines_dev, rxScanlines,
-           numRxScanlines * sizeof(ScanlineRxParameters3D))
-      .wait();
-
-  s_dev = (float *)sycl::malloc_device(
-      rxNumDepths * numRxScanlines * sizeof(float), q);
-  s = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
-
-  RFdata_dev = (int16_t *)sycl::malloc_device(
-      numReceivedChannels * numSamples * numTxScanlines * sizeof(int16_t), q);
+           numRxScanlines * sizeof(ScanlineRxParameters3D)).wait();
 
   return 1;
 }
@@ -1038,11 +1041,6 @@ void Beamforming2D::SubmitKernel(int16_t *raw_ptr, size_t len) {
   q.wait();
 
   Report_time(std::string("beamforming kernel: "), e);
-  s_tmp = (float *)malloc(rxNumDepths * numRxScanlines * sizeof(float));
-  q.memcpy(s_tmp, s_dev, rxNumDepths * numRxScanlines * sizeof(float)).wait();
-
-  shuffle_image<float>(s, s_tmp);
-  q.memcpy(s_dev, s, rxNumDepths * numRxScanlines * sizeof(float)).wait();
 }
 
 int Beamforming2D::read_one_frame2dev(int16_t *raw_ptr, size_t len) {
@@ -1050,7 +1048,6 @@ int Beamforming2D::read_one_frame2dev(int16_t *raw_ptr, size_t len) {
     std::cout << "Error raw data frame size.\n";
     return 0;
   }
-  RFdata_shuffle = (int16_t *)malloc(len * sizeof(int16_t));
   shuffle_RF_order<int16_t>(RFdata_shuffle, raw_ptr);
   q.memcpy(RFdata_dev, RFdata_shuffle, len * sizeof(int16_t)).wait();
   return 1;
@@ -1060,4 +1057,9 @@ sycl::queue Beamforming2D::getStream() { return q; }
 
 float *Beamforming2D::getRes() { return s_dev; }
 
-float *Beamforming2D::getResHost() { return s; }
+float *Beamforming2D::getResHost() {
+  q.memcpy(s_tmp, s_dev, rxNumDepths * numRxScanlines * sizeof(float)).wait();
+
+  shuffle_image<float>(s, s_tmp);
+  q.memcpy(s_dev, s, rxNumDepths * numRxScanlines * sizeof(float)).wait();
+  return s; }

@@ -33,10 +33,18 @@ struct thrustLogcompress {
 };
 
 LogCompressor::LogCompressor(float* input, sycl::queue in_q)
-    : q(in_q), input_dev(input) {}
+    : q(in_q), input_dev(input) {
+  output = (float*)sycl::malloc_host(2000 * 255 * sizeof(float), q);
+  output_dev =
+    (float*)sycl::malloc_device(2000 * 255 * sizeof(float), q);
+}
 
 LogCompressor::LogCompressor(sycl::queue in_q)
-    : q(in_q){}
+    : q(in_q){
+  output = (float*)sycl::malloc_host(2000 * 255 * sizeof(float), q);
+  output_dev =
+    (float*)sycl::malloc_device(2000 * 255 * sizeof(float), q);
+}
 
 void LogCompressor::getInput(float *input){
   input_dev = input;
@@ -57,12 +65,8 @@ void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
   }
 
   thrustLogcompress<float, float, WorkType> c(
-      sycl::pow<double>(10, (dynamicRange / 20)), static_cast<float>(inMax),
-      outMax, scale);
-
-  output = (float*)sycl::malloc_host(width * height * depth * sizeof(float), q);
-  output_dev =
-      (float*)sycl::malloc_device(width * height * depth * sizeof(float), q);
+    sycl::pow<double>(10, (dynamicRange / 20)), static_cast<float>(inMax),
+    outMax, scale);
 
   auto inImageData_t = inImageData;
   auto pComprGpu_t = output_dev;
@@ -77,7 +81,6 @@ void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
   });
 
   log_event.wait();
-  q.memcpy(output, output_dev, width * height * depth * sizeof(float)).wait();
   Report_time(std::string("LogCompressor kernel: "), log_event);
 }
 
@@ -99,6 +102,7 @@ void LogCompressor::SubmitKernel() {
 float* LogCompressor::getRes() { return output_dev; }
 
 float* LogCompressor::getResHost() {
+  q.memcpy(output, output_dev, 255 * 2000 * sizeof(float)).wait();
   return output;
 }
 
