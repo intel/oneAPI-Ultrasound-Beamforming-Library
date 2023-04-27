@@ -1,2 +1,8 @@
 # CMAKE build directories
 build/
+
+# VSCODE related
+.vscode/
+
+# Data needs to be downloaded
+data/

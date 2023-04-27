@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <limits>
 #include <string>
-#include "CL/sycl.hpp"
+#include <sycl/sycl.hpp>
 #include "vec.h"
 
 using namespace std;
@@ -33,7 +33,7 @@ constexpr inline T squ(const T& x) {
   return x * x;
 }
 
-static void malloc_mem_log(std::string s) {
+inline void malloc_mem_log(std::string s) {
   std::cout << "Malloc memory in " << s << "fail.\n";
   exit(-1);
 }

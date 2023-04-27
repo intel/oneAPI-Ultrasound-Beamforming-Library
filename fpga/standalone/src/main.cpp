@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include <sycl/ext/intel/fpga_extensions.hpp>
+#include <sycl/sycl.hpp>
 #include "BeamForming.h"
 #include "HilbertFirEnvelope.h"
 #include "LogCompressor.h"
@@ -26,16 +27,19 @@ int main(int argc, char **argv) {
     fileout = file_out;
   }
 
-  int mkdir = mkpath(fileout);
+  mkpath(fileout);
 
-#if FPGA_EMULATOR
-  ext::intel::fpga_emulator_selector device_selector;
-#else
-  ext::intel::fpga_selector device_selector;
+#if FPGA_SIMULATOR
+  auto selector = sycl::ext::intel::fpga_simulator_selector_v;
+#elif FPGA_HARDWARE
+  auto selector = sycl::ext::intel::fpga_selector_v;
+#else  // #if FPGA_EMULATOR
+  auto selector = sycl::ext::intel::fpga_emulator_selector_v;
 #endif
+
   sycl::property_list properties{sycl::property::queue::enable_profiling()};
 
-  sycl::queue q(device_selector, properties);
+  sycl::queue q(selector, properties);
 
   std::cout << "Running on device: "
             << q.get_device().get_info<info::device::name>() << "\n";

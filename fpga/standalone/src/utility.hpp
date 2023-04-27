@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <limits>
 #include <string>
-#include "CL/sycl.hpp"
+#include <sycl/sycl.hpp>
 #include "vec.h"
 
 using namespace std;

@@ -453,13 +453,6 @@ void updateInternals(vector<uint8_t> &m_mask, vector<float> &m_weightX,
 }
 
 Beamforming2D::Beamforming2D() {
-  auto property_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-  q = sycl::queue(gpu_selector{}, property_list);
-  std::cout << std::endl
-            << "Selected device: "
-            << q.get_device().get_info<sycl::info::device::name>() << std::endl;
-
   Width = 0;
   Height = 0;
 
@@ -1127,7 +1120,6 @@ void rxBeamformingDTSPACEKernel(
 
       ScanlineRxParameters3D::TransmitParameters txParams =
           scanline.txParameters[0];
-      uint32_t txScanlineIdx = txParams.txScanlineIdx;
       float sLocal = 0.0f;
 
       float sample = 0.0f;
@@ -1171,7 +1163,6 @@ void rxBeamformingDTSPACEKernel(
         int32_t delay = static_cast<int32_t>(sycl::floor(delayf));
         delayf -= delay;
         delay = delay & (MAX_SAMPLES - 1);
-        int32_t delay1 = (delay + 1) & (MAX_SAMPLES - 1);
 
         RFType rfData = 0.0;
         RFType rfData2 = 0.0;
@@ -1214,12 +1205,11 @@ void Beamforming2D::SubmitKernel() {
   size_t p_numSamples = numSamples;
   size_t p_numTxScanlines = numTxScanlines;
   size_t p_numRxScanlines = numRxScanlines;
-  struct ScanlineRxParameters3D *p_rxScanlines_dev = rxScanlines_dev;
+  ScanlineRxParameters3D *p_rxScanlines_dev = rxScanlines_dev;
   size_t p_rxNumDepths = rxNumDepths;
 
   float *p_rxDepths_dev = rxDepths_dev;
   float *p_rxElementXs_dev = rxElementXs_dev;
-  float *p_rxElementYs_dev = rxElementYs_dev;
 
   float p_speedOfSoundMMperS = speedOfSoundMMperS;
   float p_dt = dt;
@@ -1275,7 +1265,6 @@ void kernelFilterDemodulation(
     }
     for (int kh = 0; kh < ROW; kh++) {
       accumulator = 0;
-      const int filterLength = FILTER_LENGTH;
 
 #pragma unroll
       for (int j = 0; j < FILTER_LENGTH - 1; j++) {
@@ -1331,9 +1320,6 @@ void HilbertFirEnvelope::SubmitKernel() {
 void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
                              double inMax) {
   const float *inImageData = input_dev;
-  size_t width = size.x;
-  size_t height = size.y;
-  size_t depth = size.z;
 
   float outMax;
   if (std::is_integral<float>::value) {
@@ -1346,10 +1332,8 @@ void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
       sycl::pow<double>(10, (dynamicRange / 20)), static_cast<float>(inMax),
       outMax, scale);
 
-  auto inImageData_t = inImageData;
   auto pComprGpu_t = output_dev;
 
-  static long log_call_count = 0;
   static std::chrono::duration<double, std::milli> log_total_duration(0);
 
   e = q.submit([&](sycl::handler &h) {

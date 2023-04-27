@@ -638,13 +638,6 @@ void rxBeamformingDTSPACEKernel(
 }
 
 Beamforming2D::Beamforming2D() {
-  auto property_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-  q = sycl::queue(gpu_selector{}, property_list);
-  std::cout << std::endl
-            << "Selected device: "
-            << q.get_device().get_info<sycl::info::device::name>() << std::endl;
-
   Width = 0;
   Height = 0;
 

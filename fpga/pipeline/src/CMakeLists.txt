@@ -1,8 +1,8 @@
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -g")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lrt -lpthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
 
 option (STORE "Store kernel results" ON)
 message("STORE is ${STORE}")
@@ -23,16 +23,19 @@ kernels.dp.cpp
 
 set(TARGET_NAME ultrasound)
 set(EMULATOR_TARGET ${TARGET_NAME}.fpga_emu)
+set(SIMULATOR_TARGET ${TARGET_NAME}.fpga_sim)
 set(FPGA_TARGET ${TARGET_NAME}.fpga)
+set(REPORTS_TARGET ${TARGET_NAME}_report)
 
 # FPGA board selection
-if(NOT DEFINED FPGA_BOARD)
-    set(FPGA_BOARD "intel_a10gx_pac:pac_a10")
-    message(STATUS "FPGA_BOARD was not specified.\
-                    \nConfiguring the design to run on the default FPGA board ${FPGA_BOARD} (Intel(R) PAC with Intel Arria(R) 10 GX FPGA). \
-                    \nPlease refer to the README for information on board selection.")
+if(NOT DEFINED FPGA_DEVICE)
+    set(FPGA_DEVICE "intel_a10gx_pac:pac_a10")
+    message(STATUS "FPGA_DEVICE was not specified.\
+                    \nConfiguring the design to the default FPGA family: ${FPGA_DEVICE}\
+                    \nPlease refer to the README for information on target selection.")
+    set(IS_BSP "0")
 else()
-    message(STATUS "Configuring the design to run on FPGA board ${FPGA_BOARD}")
+    message(STATUS "Configuring the design with the following target: ${FPGA_DEVICE}")
 endif()
 
 # This is a Windows-specific flag that enables exception handling in host code
@@ -40,37 +43,33 @@ if(WIN32)
     set(WIN_FLAG "/EHsc")
 endif()
 
-# A DPC++ ahead-of-time (AoT) compile processes the device code in two stages.
-# 1. The "compile" stage compiles the device code to an intermediate representation (SPIR-V).
-# 2. The "link" stage invokes the compiler's FPGA backend before linking.
-#    For this reason, FPGA backend flags must be passed as link flags in CMake.
-set(EMULATOR_COMPILE_FLAGS "${WIN_FLAG} -fintelfpga -DFPGA_EMULATOR")
-set(EMULATOR_LINK_FLAGS "-fintelfpga")
-set(HARDWARE_COMPILE_FLAGS "${WIN_FLAG} -fintelfpga")
-set(HARDWARE_LINK_FLAGS "-fintelfpga -Xshardware -Xsboard=${FPGA_BOARD} ${USER_HARDWARE_FLAGS}")
+set(EMULATOR_COMPILE_FLAGS "-fsycl -fintelfpga ${WIN_FLAG} -DFPGA_EMULATOR")
+set(EMULATOR_LINK_FLAGS "-fsycl -fintelfpga")
+set(SIMULATOR_COMPILE_FLAGS "-fsycl -fintelfpga ${WIN_FLAG} -Xssimulation -DFPGA_SIMULATOR")
+set(SIMULATOR_LINK_FLAGS "-fsycl -fintelfpga -Xssimulation -Xstarget=${FPGA_DEVICE} ${USER_HARDWARE_FLAGS}")
+set(HARDWARE_COMPILE_FLAGS "-fsycl -fintelfpga ${WIN_FLAG} -DFPGA_HARDWARE")
+set(HARDWARE_LINK_FLAGS "-fsycl -fintelfpga -Xshardware -Xstarget=${FPGA_DEVICE} ${USER_HARDWARE_FLAGS}")
 
-# use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
-
-##############################################################################
-## FPGA Emulator
-##############################################################################
+###############################################################################
+### FPGA Emulator
+###############################################################################
 # To compile in a single command:
-#    dpcpp -fintelfpga -DFPGA_EMULATOR fpga_compile.cpp -o fpga_compile.fpga_emu
+#    icpx -fsycl -fintelfpga -DFPGA_EMULATOR pipe_array.cpp -o pipe_array.fpga_emu
 # CMake executes:
-#    [compile] dpcpp -fintelfpga -DFPGA_EMULATOR -o fpga_compile.cpp.o -c fpga_compile.cpp
-#    [link]    dpcpp -fintelfpga fpga_compile.cpp.o -o fpga_compile.fpga_emu
+#    [compile] icpx -fsycl -fintelfpga -DFPGA_EMULATOR -o pipe_array.cpp.o -c pipe_array.cpp
+#    [link]    icpx -fsycl -fintelfpga pipe_array.cpp.o -o pipe_array.fpga_emu
 add_executable(${EMULATOR_TARGET} ${SOURCE_FILE})
 set_target_properties(${EMULATOR_TARGET} PROPERTIES COMPILE_FLAGS "${EMULATOR_COMPILE_FLAGS}")
 set_target_properties(${EMULATOR_TARGET} PROPERTIES LINK_FLAGS "${EMULATOR_LINK_FLAGS}")
-add_custom_target(emu DEPENDS ${EMULATOR_TARGET})
+add_custom_target(fpga_emu DEPENDS ${EMULATOR_TARGET})
 
 ###############################################################################
 ### Generate Report
 ###############################################################################
 # To compile manually:
-#   dpcpp -fintelfpga -Xshardware -Xsboard=<FPGA_BOARD> -fsycl-link=early fpga_compile.cpp -o fpga_compile_report.a
+#   icpx -fsycl -fintelfpga -Xshardware -Xstarget=<FPGA_DEVICE> -fsycl-link=early pipe_array.cpp -o pipe_array_report.a
 set(FPGA_EARLY_IMAGE ${TARGET_NAME}_report.a)
-# The compile output is not an executable, but an intermediate compilation result unique to DPC++.
+# The compile output is not an executable, but an intermediate compilation result unique to SYCL.
 add_executable(${FPGA_EARLY_IMAGE} ${SOURCE_FILE})
 add_custom_target(report DEPENDS ${FPGA_EARLY_IMAGE})
 set_target_properties(${FPGA_EARLY_IMAGE} PROPERTIES COMPILE_FLAGS "${HARDWARE_COMPILE_FLAGS}")
@@ -78,14 +77,29 @@ set_target_properties(${FPGA_EARLY_IMAGE} PROPERTIES LINK_FLAGS "${HARDWARE_LINK
 # fsycl-link=early stops the compiler after RTL generation, before invoking Quartus®
 
 ###############################################################################
+### FPGA Simulator
+###############################################################################
+# To compile in a single command:
+#   icpx -fsycl -fintelfpga -Xssimulation -DFPGA_SIMULATOR -Xstarget=<FPGA_DEVICE> pipe_array.cpp -o pipe_array.fpga
+# CMake executes:
+#   [compile] icpx -fsycl -fintelfpga -Xssimulation -DFPGA_SIMULATOR -o pipe_array.cpp.o -c pipe_array.cpp
+#   [link]    icpx -fsycl -fintelfpga -Xssimulation -Xstarget=<FPGA_DEVICE> pipe_array.cpp.o -o pipe_array.fpga
+add_executable(${SIMULATOR_TARGET} EXCLUDE_FROM_ALL ${SOURCE_FILE})
+add_custom_target(fpga_sim DEPENDS ${SIMULATOR_TARGET})
+set_target_properties(${SIMULATOR_TARGET} PROPERTIES COMPILE_FLAGS "${SIMULATOR_COMPILE_FLAGS}")
+set_target_properties(${SIMULATOR_TARGET} PROPERTIES LINK_FLAGS "${SIMULATOR_LINK_FLAGS}")
+
+###############################################################################
 ### FPGA Hardware
 ###############################################################################
 # To compile in a single command:
-#   dpcpp -fintelfpga -Xshardware -Xsboard=<FPGA_BOARD> fpga_compile.cpp -o fpga_compile.fpga
+#   icpx -fsycl -fintelfpga -Xshardware -Xstarget=<FPGA_DEVICE> pipe_array.cpp -o pipe_array.fpga
 # CMake executes:
-#   [compile] dpcpp -fintelfpga -o fpga_compile.cpp.o -c fpga_compile.cpp
-#   [link]    dpcpp -fintelfpga -Xshardware -Xsboard=<FPGA_BOARD> fpga_compile.cpp.o -o fpga_compile.fpga
+#   [compile] icpx -fsycl -fintelfpga -o pipe_array.cpp.o -c pipe_array.cpp
+#   [link]    icpx -fsycl -fintelfpga -Xshardware -Xstarget=<FPGA_DEVICE> pipe_array.cpp.o -o pipe_array.fpga
 add_executable(${FPGA_TARGET} EXCLUDE_FROM_ALL ${SOURCE_FILE})
 add_custom_target(fpga DEPENDS ${FPGA_TARGET})
 set_target_properties(${FPGA_TARGET} PROPERTIES COMPILE_FLAGS "${HARDWARE_COMPILE_FLAGS}")
-set_target_properties(${FPGA_TARGET} PROPERTIES LINK_FLAGS "${HARDWARE_LINK_FLAGS}")
+set_target_properties(${FPGA_TARGET} PROPERTIES LINK_FLAGS "${HARDWARE_LINK_FLAGS} -reuse-exe=${CMAKE_BINARY_DIR}/${FPGA_TARGET}")
+# The -reuse-exe flag enables rapid recompilation of host-only code changes.
+# See C++SYCL_FPGA/GettingStarted/fast_recompile for details.
