@@ -1,10 +1,10 @@
 // Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#ifndef __LOGCOMPRESSOR_H__
-#define __LOGCOMPRESSOR_H__
+#ifndef LOGCOMPRESSOR_H
+#define LOGCOMPRESSOR_H
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <memory>
 #include "utility.hpp"
 

@@ -1,7 +1,7 @@
 // Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include <stdio.h>
@@ -31,10 +31,10 @@ int read_all_RFdata(const char *Inputfilename, int16_t *&rfdata,
 void clean_up_shm_sem();
 
 static void Report_time(const std::string &msg, sycl::event e) {
-  cl::sycl::cl_ulong time_start =
+  sycl::cl_ulong time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 
-  cl::sycl::cl_ulong time_end =
+  sycl::cl_ulong time_end =
       e.get_profiling_info<sycl::info::event_profiling::command_end>();
 
   double elapsed = (time_end - time_start) / 1e6;
@@ -46,13 +46,13 @@ int main(int argc, char *argv[]) {
   const char *filein = argv[2];
 
 #ifdef FPGA_EMULATOR
-  ext::intel::fpga_emulator_selector device_selector;
+    auto selector = sycl::ext::intel::fpga_emulator_selector_v;
 #else
-  ext::intel::fpga_selector device_selector;
+    auto selector = sycl::ext::intel::fpga_selector_v;
 #endif
 
   auto props = sycl::property_list{sycl::property::queue::enable_profiling()};
-  sycl::queue q(device_selector, props);
+  sycl::queue q(selector, props);
   std::cout << "Selected device: "
             << q.get_device().get_info<sycl::info::device::name>() << std::endl;
 

@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include "utility.hpp"
 
 /// A factory for FIR filters

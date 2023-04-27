@@ -8,7 +8,7 @@
 #ifndef _SYCL_HELP_HPP_
 #define _SYCL_HELP_HPP_
 
-#include "CL/sycl.hpp"
+#include <sycl/sycl.hpp>
 
 // #include "dpc_common.hpp"
 #define STB_IMAGE_IMPLEMENTATION
@@ -23,7 +23,7 @@
 #define SHOW_IMG_CHANNELS 1
 
 using namespace std;
-using namespace cl::sycl;
+using namespace sycl;
 
 int mkpath(std::string &s)
 {

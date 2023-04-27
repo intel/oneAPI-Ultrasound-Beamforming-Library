@@ -4,7 +4,6 @@
 #include <oneapi/dpl/algorithm>
 #include <oneapi/dpl/execution>
 
-#include <CL/sycl.hpp>
 #include "LogCompressor.h"
 #include "utility.hpp"
 

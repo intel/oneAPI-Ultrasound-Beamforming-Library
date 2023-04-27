@@ -4,12 +4,12 @@
 #ifndef ULTRASOUND_H
 #define ULTRASOUND_H
 
-#include <CL/sycl.hpp>
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sycl/sycl.hpp>
 #include "utility.hpp"
 
 using namespace std;

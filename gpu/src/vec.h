@@ -12,7 +12,7 @@
 #ifndef __VEC_H__
 #define __VEC_H__
 
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <cmath>
 #include <dpct/dpct.hpp>
 
