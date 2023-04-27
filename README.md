@@ -140,7 +140,7 @@ If you want to compile FPGA binary or using FPGA emulator to emulate data produc
 
 then run make using the command if a new FPGA binary is needed to be compiled:
 
-    $ make fpga -j4
+    $ make fpga -j4  (Use this command only if you have a FPGA hardware card)
 
 If you want to use FPGA emulator, use the command:
 

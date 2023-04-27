@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <sycl/sycl.hpp>
 #include "utility.hpp"
 
 class ScanConverter {

@@ -30,8 +30,8 @@ int main(int argc, char **argv) {
   int mkdir = mkpath(fileout);
 
   auto property_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
-  sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
+      sycl::property_list{sycl::property::queue::enable_profiling()};
+  sycl::queue in_q = sycl::queue(gpu_selector_v, property_list);
   std::cout << std::endl
             << "Selected device: "
             << in_q.get_device().get_info<sycl::info::device::name>()

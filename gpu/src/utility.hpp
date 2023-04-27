@@ -8,20 +8,20 @@
 #include <iomanip>
 #include <limits>
 #include <string>
-#include "CL/sycl.hpp"
+#include <sycl/sycl.hpp>
 #include "vec.h"
 
 using namespace std;
-using namespace cl::sycl;
+using namespace sycl;
 
 #define __FLT_MAX__ 3.40282347e+38F
 #define FLT_MAX __FLT_MAX__
 
 static void Report_time(const std::string& msg, sycl::event e) {
-  cl::sycl::cl_ulong time_start =
+  sycl::cl_ulong time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 
-  cl::sycl::cl_ulong time_end =
+  sycl::cl_ulong time_end =
       e.get_profiling_info<sycl::info::event_profiling::command_end>();
 
   double elapsed = (time_end - time_start) / 1e6;
