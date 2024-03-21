@@ -101,6 +101,8 @@ If just test the GPU performance for easy testing, run the command:
     $ src/easy_app data/linearProbe_IPCAI_128-2.mock data/linearProbe_IPCAI_128-2_0.raw
 
 Note: If you run it on Intel discrete GPU, you need to run `export IGC_EnableDPEmulation=1` before running above command.
+Or if you have multiple GPUs, you could use `sycl-ls` to list all the available devices. Then choose one to run, for example
+    $ export SYCL_DEVICE_FILTER=ext_oneapi_level_zero:gpu:1
 
 ### (3) See the result and performance
 
@@ -140,7 +142,7 @@ If you want to compile FPGA binary or using FPGA emulator to emulate data produc
 
 then run make using the command if a new FPGA binary is needed to be compiled:
 
-    $ make fpga -j4
+    $ make fpga -j4  (Use this command only if you have a FPGA hardware card)
 
 If you want to use FPGA emulator, use the command:
 
