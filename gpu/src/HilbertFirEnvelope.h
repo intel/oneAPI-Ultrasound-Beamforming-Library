@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <dpct/dpct.hpp>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -233,7 +232,7 @@ class FirFilterFactory {
 class HilbertFirEnvelope {
  public:
   typedef float WorkType;
-  HilbertFirEnvelope(sycl::queue &in_q);
+  HilbertFirEnvelope(sycl::queue &in_q, RawParam *params);
   ~HilbertFirEnvelope();
 
   void copydata(float *host_addr, size_t len = 2000 * 255);
@@ -243,6 +242,9 @@ class HilbertFirEnvelope {
 
   float *getRes();
   float *getResHost();
+
+  vec2i m_outputSize;
+  std::vector<double> comsuming_time;
 
  private:
   sycl::queue q;

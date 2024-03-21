@@ -20,7 +20,7 @@ class Beamforming2D {
 
   ~Beamforming2D(void);
 
-  int GetInputImage(const char *Paramfilename, const char *Inputfilename);
+  int GetInputImage(const char *Paramfilename, const char *Inputfilename, RawParam* &Params);
 
   int read_one_frame2dev(int16_t *raw_ptr, size_t len);
 
@@ -84,6 +84,10 @@ class Beamforming2D {
   float *m_weightY;
 
   vec3s m_imageSize;
+  vec2i m_outputSize;
+
+  std::vector<double> comsuming_time;
+  std::vector<double> memcpy_time;
 };
 
 #endif

@@ -14,7 +14,6 @@
 
 #include <CL/sycl.hpp>
 #include <cmath>
-#include <dpct/dpct.hpp>
 
 #ifndef M_PI
 /// Definition of pi for the cuda compile path, as cuda math.h does not seem to

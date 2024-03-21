@@ -747,7 +747,7 @@ Beamforming2D::~Beamforming2D() {
   if (rxElementXs) sycl::free(rxElementXs, q);
   if (rxElementYs) sycl::free(rxElementYs, q);
   if (window_data) sycl::free(window_data, q);
-  // this RFdata buffer using standard C library malloc to allocate, so use free(), dont's use sycl::free() 
+  // this RFdata buffer using standard C library malloc to allocate, so use free(), don't use sycl::free() 
   if (RFdata) free(RFdata); 
   if (s) sycl::free(s, q);
 
@@ -772,7 +772,8 @@ Beamforming2D::~Beamforming2D() {
 
 const int FRAME_NUM = 8;
 int Beamforming2D::GetInputImage(const char *Paramfilename,
-                                 const char *Inputfilename) {
+                                 const char *Inputfilename,
+                                 RawParam* &Params) {
   // read parameters file
   std::ifstream f(Paramfilename);
   std::string dummy;
@@ -794,8 +795,14 @@ int Beamforming2D::GetInputImage(const char *Paramfilename,
     f >> samplingFrequency;
     f >> rxNumDepths;
     f >> speedOfSoundMMperS;
+
+    Params = new RawParam(numElements, numReceivedChannels, numSamples,
+              numTxScanlines, rxNumDepths, scanlineLayout, elementLayout,
+              depth, samplingFrequency, speedOfSoundMMperS);
+    m_outputSize.x = rxNumDepths;
+    m_outputSize.y = scanlineLayout.x * scanlineLayout.y;
   } else {
-    printf("input file open fail\n");
+    printf("Failed to open parameter file.\n");
     return -1;
   }
 
@@ -1047,6 +1054,8 @@ int Beamforming2D::copy_data2dev() {
 #else 
   RFdata_dev = NULL;
 #endif
+  if(NULL == RFdata_dev)
+    malloc_mem_log(std::string("RFdata_dev"));
 
   return 1;
 }
@@ -1106,7 +1115,7 @@ void Beamforming2D::SubmitKernel(int16_t *raw_ptr, size_t len) {
 
   e.wait();
 
-  Report_time(std::string("beamforming kernel: "), e);
+  comsuming_time.push_back(Report_time(std::string("Beamforming kernel: "), e)); 
 }
 
 int Beamforming2D::read_one_frame2dev(int16_t *raw_ptr, size_t len) {
@@ -1117,7 +1126,7 @@ int Beamforming2D::read_one_frame2dev(int16_t *raw_ptr, size_t len) {
 #ifndef USE_ZMC
   sycl::event RF_cpy = q.memcpy(RFdata_dev, raw_ptr, len * sizeof(int16_t));
   RF_cpy.wait();
-  Report_time(std::string("RFdata copy time: "), RF_cpy);
+  memcpy_time.push_back(Report_time(std::string("BRFdata copy time: "), RF_cpy)); 
 #endif
   return 1;
 }
