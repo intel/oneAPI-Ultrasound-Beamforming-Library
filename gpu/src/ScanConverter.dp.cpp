@@ -249,28 +249,35 @@ void scanConvert2D(uint32_t numScanlines, uint32_t numSamples, uint32_t width,
 
 ScanConverter::ScanConverter(sycl::queue hq, float *input_addr, uint8_t *mask,
                              uint32_t *sampleIdx, float *weightX,
-                             float *weightY, vec3s imageSize)
+                             float *weightY, vec3s imageSize,
+                             RawParam *p_Params)
     : q(hq),
       input_dev(input_addr),
       m_mask(mask),
       m_sampleIdx(sampleIdx),
       m_weightX(weightX),
       m_weightY(weightY),
-      m_imageSize(imageSize) {}
+      m_imageSize(imageSize),
+      params(p_Params) {}
 
 ScanConverter::ScanConverter(sycl::queue hq, uint8_t *mask,
                              uint32_t *sampleIdx, float *weightX,
-                             float *weightY, vec3s imageSize)
+                             float *weightY, vec3s imageSize,
+                             RawParam *p_Params)
     : q(hq),
       m_mask(mask),
       m_sampleIdx(sampleIdx),
       m_weightX(weightX),
       m_weightY(weightY),
-      m_imageSize(imageSize) {
+      m_imageSize(imageSize),
+      params(p_Params) {
+  size_t output_size = m_imageSize.x * m_imageSize.y * m_imageSize.z;
+  m_outputSize.x = m_imageSize.y;
+  m_outputSize.y = m_imageSize.x;
   output_dev = (float *)sycl::malloc_device(
-    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(float), q);
+    output_size * sizeof(float), q);
   output = (float *)sycl::malloc_host(
-    m_imageSize.x * m_imageSize.y * m_imageSize.z * sizeof(float), q);
+    output_size * sizeof(float), q);
 }
 
 void ScanConverter::getInput(float *input){
@@ -284,10 +291,10 @@ void ScanConverter::SubmitKernel() { convert2D<float, float>(); }
 template <typename InputType, typename OutputType>
 void ScanConverter::convert2D() {
   float *inImage = input_dev;
-  uint32_t numScanlines = 255;
-  vec2s scanlineLayout = {255, 1};
-  uint32_t numSamples = 2000;
-  m_imageSize = {1667, 2000, 1};
+  uint32_t numScanlines = params->scanlineLayout.x * params->scanlineLayout.y;
+  vec2s scanlineLayout = {params->scanlineLayout.x, params->scanlineLayout.y};
+  uint32_t numSamples = params->numSamples;
+  // m_imageSize = {1667, 2000, 1};
 
   InputType *pScanlineData = inImage;
 
@@ -326,7 +333,8 @@ void ScanConverter::convert2D() {
   });
 
   scan_event.wait();
-  Report_time(std::string("ScanConvertor kernel: "), scan_event);
+  comsuming_time.push_back(Report_time(std::string("ScanConvertor kernel: "), scan_event)); 
+
 }
 
 float *ScanConverter::getRes() { return output_dev; }

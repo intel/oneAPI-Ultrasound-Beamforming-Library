@@ -32,18 +32,22 @@ struct thrustLogcompress {
   }
 };
 
-LogCompressor::LogCompressor(float* input, sycl::queue in_q)
-    : q(in_q), input_dev(input) {
-  output = (float*)sycl::malloc_host(2000 * 255 * sizeof(float), q);
+LogCompressor::LogCompressor(float* input, sycl::queue in_q, RawParam *param)
+    : q(in_q), input_dev(input), p_param(param) {
+  m_outputSize.y = param->scanlineLayout.x * param->scanlineLayout.y;
+  m_outputSize.x = param->rxNumDepths;
+  output = (float*)sycl::malloc_host(m_outputSize.x * m_outputSize.y * sizeof(float), q);
   output_dev =
-    (float*)sycl::malloc_device(2000 * 255 * sizeof(float), q);
+    (float*)sycl::malloc_device(m_outputSize.x * m_outputSize.y * sizeof(float), q);
 }
 
-LogCompressor::LogCompressor(sycl::queue in_q)
-    : q(in_q){
-  output = (float*)sycl::malloc_host(2000 * 255 * sizeof(float), q);
+LogCompressor::LogCompressor(sycl::queue in_q, RawParam *param)
+    : q(in_q), p_param(param) {
+  m_outputSize.y = param->scanlineLayout.x * param->scanlineLayout.y;
+  m_outputSize.x = param->rxNumDepths;
+  output = (float*)sycl::malloc_host(m_outputSize.x * m_outputSize.y * sizeof(float), q);
   output_dev =
-    (float*)sycl::malloc_device(2000 * 255 * sizeof(float), q);
+    (float*)sycl::malloc_device(m_outputSize.x * m_outputSize.y * sizeof(float), q);
 }
 
 void LogCompressor::getInput(float *input){
@@ -81,15 +85,17 @@ void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
   });
 
   log_event.wait();
-  Report_time(std::string("LogCompressor kernel: "), log_event);
+  comsuming_time.push_back(Report_time(std::string("LogCompressor kernel: "), log_event)); 
+
 }
 
 void LogCompressor::SubmitKernel() {
   vec3s m_input_size;
-  m_input_size.x = 255;
-  m_input_size.y = 2000;
+  m_input_size.x = p_param->scanlineLayout.x;
+  m_input_size.y = p_param->rxNumDepths;
   m_input_size.z = 1;
 
+// Todo: the meanings of the params
   double m_dynamicRange = 80;
 
   double m_scale = 1;
@@ -102,7 +108,7 @@ void LogCompressor::SubmitKernel() {
 float* LogCompressor::getRes() { return output_dev; }
 
 float* LogCompressor::getResHost() {
-  q.memcpy(output, output_dev, 255 * 2000 * sizeof(float)).wait();
+  q.memcpy(output, output_dev, p_param->rxNumDepths * p_param->scanlineLayout.x * sizeof(float)).wait();
   return output;
 }
 

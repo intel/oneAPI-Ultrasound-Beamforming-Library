@@ -17,8 +17,8 @@ class LogCompressor {
   typedef float WorkType;
 
   void compress(vec3s size, double dynamicRange, double scale, double inMax);
-  LogCompressor(float* input, sycl::queue in_q);
-  LogCompressor(sycl::queue in_q);
+  LogCompressor(float* input, sycl::queue in_q, RawParam *param);
+  LogCompressor(sycl::queue in_q, RawParam *param);
   void getInput(float *input);
   ~LogCompressor();
   void SubmitKernel();
@@ -26,12 +26,16 @@ class LogCompressor {
   float* getRes();
   float* getResHost();
 
+  vec2i m_outputSize;
+  std::vector<double> comsuming_time;
+
  private:
   sycl::queue q;
 
   float* input_dev = NULL;
   float* output_dev = NULL;
   float* output = NULL;
+  RawParam *p_param = NULL;
 };
 
 #endif  //!__LOGCOMPRESSOR_H__

@@ -48,18 +48,20 @@ void kernelFilterDemodulation(
   }
 }
 
-HilbertFirEnvelope::HilbertFirEnvelope(sycl::queue& in_q) {
+HilbertFirEnvelope::HilbertFirEnvelope(sycl::queue& in_q, RawParam *params) {
   q = in_q;
-
-  m_numScanlines = 255;
-  m_numSamples = 2000;
+  m_numScanlines = params->scanlineLayout.x * params->scanlineLayout.y;
+  m_numSamples = params->rxNumDepths;
+  m_outputSize.x = m_numSamples;
+  m_outputSize.y = m_numScanlines;
+  // Todo: meaning of m_filterLength
   m_filterLength = 65;
   input_dev = (float*)sycl::malloc_device(
-      m_numScanlines * m_numSamples * sizeof(float), q);
+      m_outputSize.x * m_outputSize.y * sizeof(float), q);
   output = (float*)sycl::malloc_host(
-      m_numScanlines * m_numSamples * sizeof(float), q);
+      m_outputSize.x * m_outputSize.y * sizeof(float), q);
   output_dev = (float*)sycl::malloc_device(
-      m_numScanlines * m_numSamples * sizeof(float), q);
+      m_outputSize.x * m_outputSize.y * sizeof(float), q);
   prepareFilter();
 }
 
@@ -109,7 +111,8 @@ void HilbertFirEnvelope::SubmitKernel() {
 
   e.wait();
 
-  Report_time(std::string("HilbertFirEnvelope kernel: "), e);
+  comsuming_time.push_back(Report_time(std::string("HilbertFirEnvelope kernel: "), e)); 
+
 }
 
 float* HilbertFirEnvelope::getRes() { return output_dev; }

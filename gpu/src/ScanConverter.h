@@ -19,10 +19,10 @@ class ScanConverter {
 
   ScanConverter(sycl::queue hq, float* input_addr, uint8_t* mask,
                 uint32_t* sampleIdx, float* weightX, float* weightY,
-                vec3s imageSize);
+                vec3s imageSize, RawParam *p_Params);
   ScanConverter(sycl::queue hq, uint8_t* mask,
                 uint32_t* sampleIdx, float* weightX, float* weightY,
-                vec3s imageSize);
+                vec3s imageSize, RawParam *p_Params);
   ~ScanConverter();
 
   template <typename InputType, typename OutputType>
@@ -36,6 +36,9 @@ class ScanConverter {
 
   float* getRes();
   float* getResHost();
+
+  vec2i m_outputSize;
+  std::vector<double> comsuming_time;
 
  private:
   sycl::queue q;
@@ -61,6 +64,8 @@ class ScanConverter {
   WeightType* m_weightZ;
 
   vec3s m_imageSize = {0, 0, 0};
+
+  RawParam *params = NULL;
 };
 
 #endif  //!__SCANCONVERTER_H__

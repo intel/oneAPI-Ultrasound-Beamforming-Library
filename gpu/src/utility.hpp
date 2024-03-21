@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <limits>
 #include <string>
+#include <vector>
 #include "CL/sycl.hpp"
 #include "vec.h"
 
@@ -17,7 +18,14 @@ using namespace cl::sycl;
 #define __FLT_MAX__ 3.40282347e+38F
 #define FLT_MAX __FLT_MAX__
 
-static void Report_time(const std::string& msg, sycl::event e) {
+static double AvgVec(std::vector<double> &vec) {
+  double res = 0;
+  for (int i = 0; i < vec.size(); i++)
+    res += vec[i];
+  return res/vec.size();
+} 
+
+static double Report_time(const std::string& msg, sycl::event e) {
   cl::sycl::cl_ulong time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 
@@ -26,6 +34,7 @@ static void Report_time(const std::string& msg, sycl::event e) {
 
   double elapsed = (time_end - time_start) / 1e6;
   std::cout << msg << elapsed << " milliseconds\n";
+  return elapsed;
 }
 
 template <typename T>
@@ -34,7 +43,7 @@ constexpr inline T squ(const T& x) {
 }
 
 static void malloc_mem_log(std::string s) {
-  std::cout << "Malloc memory in " << s << "fail.\n";
+  std::cout << "Malloc memory in " << s << " fail.\n";
   exit(-1);
 }
 
@@ -118,6 +127,44 @@ class ScanlineRxParameters3D {
                                   const ScanlineRxParameters3D& params);
   friend std::istream& operator>>(std::istream& is,
                                   ScanlineRxParameters3D& params);
+};
+
+class RawParam {
+ public:
+  size_t numElements;
+  size_t numReceivedChannels;
+  size_t numSamples;
+  size_t numTxScanlines;
+  size_t rxNumDepths;
+  vec2s scanlineLayout;
+  vec2s elementLayout;
+  double depth;
+  double samplingFrequency;
+  double speedOfSoundMMperS;
+
+  RawParam(size_t p_numElements,
+  size_t p_numReceivedChannels,
+  size_t p_numSamples,
+  size_t p_numTxScanlines,
+  size_t p_rxNumDepths,
+  vec2s p_scanlineLayout,
+  vec2s p_elementLayout,
+  double p_depth,
+  double p_samplingFrequency,
+  double p_speedOfSoundMMperS) {
+    numElements = p_numElements;
+    numReceivedChannels = p_numReceivedChannels;
+    numSamples = p_numSamples;
+    numTxScanlines = p_numTxScanlines;
+    rxNumDepths = p_rxNumDepths;
+    depth = p_depth;
+    samplingFrequency = p_samplingFrequency;
+    speedOfSoundMMperS = p_speedOfSoundMMperS;
+    scanlineLayout.x = p_scanlineLayout.x;
+    scanlineLayout.y = p_scanlineLayout.y;
+    elementLayout.x = p_elementLayout.x;
+    elementLayout.y = p_elementLayout.y;
+  }
 };
 
 #endif

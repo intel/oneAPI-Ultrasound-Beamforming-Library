@@ -8,10 +8,11 @@
 #include "shm.h"
 #include "sycl_help.hpp"
 
+#include <numeric>
+#include <cstdlib>
+
 using namespace std;
 using namespace sycl;
-
-const size_t raw_len = 128 * 64 * 2337;
 
 #define SAVE_IMG 1
 
@@ -37,10 +38,11 @@ int main(int argc, char **argv) {
             << in_q.get_device().get_info<sycl::info::device::name>()
             << std::endl;
 
-  BeamformingType type = DelayAndSum;
   Beamforming2D beamformer(in_q);
 
-  int ret = beamformer.GetInputImage(fileparam, filein);
+  RawParam *params = NULL;
+
+  int ret = beamformer.GetInputImage(fileparam, filein, params);
   if (ret) {
     std::cout << "Read file success.\n";
   }
@@ -50,13 +52,13 @@ int main(int argc, char **argv) {
     std::cout << "Copy data to device success.\n";
   }
 
-  HilbertFirEnvelope hilbertenvelope(in_q);
+  HilbertFirEnvelope hilbertenvelope(in_q, params);
   hilbertenvelope.prepareFilter();
 
-  LogCompressor logcompressor(in_q);
+  LogCompressor logcompressor(in_q, params);
   ScanConverter scanconvertor(in_q, beamformer.m_mask,
         beamformer.m_sampleIdx, beamformer.m_weightX, beamformer.m_weightY,
-        beamformer.m_imageSize);
+        beamformer.m_imageSize, params);
 
   int fd_1, fd_2;
 
@@ -111,6 +113,7 @@ int main(int argc, char **argv) {
   }
 
   uint num_run = 0;
+  size_t raw_len = params->numReceivedChannels * params->numSamples * params->numTxScanlines;
 
   for (size_t i = 0; i < 8; i++) {
     sem_wait(nstored);
@@ -148,6 +151,21 @@ int main(int argc, char **argv) {
 
     sem_post(nempty);
   }
+
+  double total_time = 0;
+
+  std::cout << std::endl << "====Summary====" << std::endl;
+  std::cout << "Raw data copy avg time for 1 frame : " << AvgVec(beamformer.memcpy_time) << " ms." << std::endl;
+  std::cout << "BeamForming avg time for 1 frame : " << AvgVec(beamformer.comsuming_time) << " ms." << std::endl;
+  std::cout << "HilbertEnvelop avg time for 1 frame : " << AvgVec(hilbertenvelope.comsuming_time) << " ms." << std::endl;
+  std::cout << "LogCompressor avg time for 1 frame : " << AvgVec(logcompressor.comsuming_time) << " ms." << std::endl;
+  std::cout << "ScanConvertor avg time for 1 frame : " << AvgVec(scanconvertor.comsuming_time) << " ms." << std::endl;
+  total_time += AvgVec(beamformer.comsuming_time) + AvgVec(hilbertenvelope.comsuming_time) + AvgVec(logcompressor.comsuming_time) + AvgVec(logcompressor.comsuming_time);
+  std::cout << "FPS without data copy : " << 1000 / total_time << std::endl;
+  total_time += AvgVec(beamformer.memcpy_time);
+  std::cout << "FPS with data copy : " << 1000 / total_time << std::endl;
+
+  if (params) delete params;
 
   return 0;
 }

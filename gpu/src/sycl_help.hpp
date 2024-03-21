@@ -161,4 +161,8 @@ void SaveImage1(std::string save_file_Name, float *res) {
   stb_write_img_u8_single_channel(save_file_Name, 2000, 1667, res);
 }
 
+void SaveImage(std::string save_file_Name, vec2i size, float *res) {
+  stb_write_img_u8_single_channel(save_file_Name, size.x, size.y, res);
+}
+
 #endif  //_SYCL_HELP_HPP_
