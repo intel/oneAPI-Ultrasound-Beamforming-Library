@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <dpct/dpct.hpp>
 #include <fstream>
 #include <functional>
 #include <iostream>
