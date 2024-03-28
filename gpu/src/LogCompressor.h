@@ -16,9 +16,9 @@ class LogCompressor {
  public:
   typedef float WorkType;
 
-  void compress(vec3s size, double dynamicRange, double scale, double inMax);
-  LogCompressor(float* input, sycl::queue in_q, RawParam *param);
-  LogCompressor(sycl::queue in_q, RawParam *param);
+  void compress(vec3s &size, double dynamicRange, double scale, double inMax);
+  LogCompressor(float* &input, sycl::queue &in_q, RawParam* &param);
+  LogCompressor(sycl::queue &in_q, RawParam* &param);
   void getInput(float *input);
   ~LogCompressor();
   void SubmitKernel();

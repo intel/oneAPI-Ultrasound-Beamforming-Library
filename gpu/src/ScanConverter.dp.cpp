@@ -222,7 +222,8 @@ void scanConvert2D(uint32_t numScanlines, uint32_t numSamples, uint32_t width,
                    const WeightType *__restrict__ weightX,
                    const WeightType *__restrict__ weightY,
                    const InputType *__restrict__ scanlines,
-                   OutputType *__restrict__ image, sycl::nd_item<3> item_ct1) {
+                   OutputType *__restrict__ image,
+                   sycl::nd_item<3> &item_ct1) {
   uint32_t param1 = (item_ct1.get_local_range().get(2) * item_ct1.get_group(2) +
                      item_ct1.get_local_id(2));
   uint32_t param2 = (item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
@@ -247,9 +248,9 @@ void scanConvert2D(uint32_t numScanlines, uint32_t numSamples, uint32_t width,
   }
 }
 
-ScanConverter::ScanConverter(sycl::queue hq, float *input_addr, uint8_t *mask,
+ScanConverter::ScanConverter(sycl::queue &hq, float *input_addr, uint8_t *mask,
                              uint32_t *sampleIdx, float *weightX,
-                             float *weightY, vec3s imageSize,
+                             float *weightY, vec3s &imageSize,
                              RawParam *p_Params)
     : q(hq),
       input_dev(input_addr),
@@ -260,9 +261,9 @@ ScanConverter::ScanConverter(sycl::queue hq, float *input_addr, uint8_t *mask,
       m_imageSize(imageSize),
       params(p_Params) {}
 
-ScanConverter::ScanConverter(sycl::queue hq, uint8_t *mask,
+ScanConverter::ScanConverter(sycl::queue &hq, uint8_t *mask,
                              uint32_t *sampleIdx, float *weightX,
-                             float *weightY, vec3s imageSize,
+                             float *weightY, vec3s &imageSize,
                              RawParam *p_Params)
     : q(hq),
       m_mask(mask),

@@ -24,10 +24,7 @@ int main(int argc, char **argv) {
   string fileout("./res");
 
   if(argc == 4)
-  {
-    string file_out(argv[3]);
-    fileout = file_out;
-  }
+    fileout = string(argv[3]);
 
   int mkdir = mkpath(fileout);
 
@@ -63,8 +60,6 @@ int main(int argc, char **argv) {
 
   size_t num_run = 0;
   size_t raw_len = params->numReceivedChannels * params->numSamples * params->numTxScanlines;
-
-  beamformer.read_one_frame2dev(beamformer.RFdata, raw_len);
 
   while(num_run < run_steps) {
     beamformer.read_one_frame2dev(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
@@ -115,7 +110,7 @@ int main(int argc, char **argv) {
   total_time += AvgVec(beamformer.memcpy_time);
   std::cout << "FPS with data copy : " << 1000 / total_time << std::endl;
 
-  if (params) delete params;
+  if (params != nullptr) delete params;
 
   return 0;
 }

@@ -9,7 +9,7 @@ void kernelFilterDemodulation(
     const InputType* __restrict__ signal,
     const HilbertFirEnvelope::WorkType* __restrict__ filter,
     OutputType* __restrict__ out, const int numSamples, const int numScanlines,
-    const int filterLength, sycl::nd_item<3> item_ct1) {
+    const int filterLength, sycl::nd_item<3> &item_ct1) {
   int scanlineIdx = item_ct1.get_local_range().get(2) * item_ct1.get_group(2) +
                     item_ct1.get_local_id(2);
   int sampleIdx = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +

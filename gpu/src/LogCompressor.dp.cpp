@@ -32,7 +32,7 @@ struct thrustLogcompress {
   }
 };
 
-LogCompressor::LogCompressor(float* input, sycl::queue in_q, RawParam *param)
+LogCompressor::LogCompressor(float* &input, sycl::queue &in_q, RawParam* &param)
     : q(in_q), input_dev(input), p_param(param) {
   m_outputSize.y = param->scanlineLayout.x * param->scanlineLayout.y;
   m_outputSize.x = param->rxNumDepths;
@@ -41,7 +41,7 @@ LogCompressor::LogCompressor(float* input, sycl::queue in_q, RawParam *param)
     (float*)sycl::malloc_device(m_outputSize.x * m_outputSize.y * sizeof(float), q);
 }
 
-LogCompressor::LogCompressor(sycl::queue in_q, RawParam *param)
+LogCompressor::LogCompressor(sycl::queue &in_q, RawParam* &param)
     : q(in_q), p_param(param) {
   m_outputSize.y = param->scanlineLayout.x * param->scanlineLayout.y;
   m_outputSize.x = param->rxNumDepths;
@@ -54,7 +54,7 @@ void LogCompressor::getInput(float *input){
   input_dev = input;
 }
 
-void LogCompressor::compress(vec3s size, double dynamicRange, double scale,
+void LogCompressor::compress(vec3s &size, double dynamicRange, double scale,
                              double inMax) {
   const float* inImageData = input_dev;
   size_t width = size.x;

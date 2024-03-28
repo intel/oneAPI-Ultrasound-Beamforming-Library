@@ -30,7 +30,7 @@ int read_all_RFdata(const char *Inputfilename, int16_t *&rfdata,
 
 void clean_up_shm_sem();
 
-static void Report_time(const std::string &msg, sycl::event e) {
+static void Report_time(const std::string &msg, sycl::event &e) {
   cl::sycl::cl_ulong time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 

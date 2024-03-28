@@ -23,10 +23,7 @@ int main(int argc, char **argv) {
   string fileout("./res");
 
   if(argc == 4)
-  {
-    string file_out(argv[3]);
-    fileout = file_out;
-  }
+    fileout = string(argv[3]);
 
   int mkdir = mkpath(fileout);
 
@@ -64,6 +61,11 @@ int main(int argc, char **argv) {
 
   fd_1 = shm_open(shm_name[0], O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
   fd_2 = shm_open(shm_name[1], O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+
+  if (-1 == fd_1 || -1 == fd_2) {
+    std::cout << "Opening shared memory fails..\n";
+    exit(-1);
+  }
 
   struct stat shm_stat1, shm_stat2;
   int err_1 = fstat(fd_1, &shm_stat1);
@@ -122,7 +124,7 @@ int main(int argc, char **argv) {
 
 #if SAVE_IMG
     std::string file_path1 = fileout + "/frame_bf_" + std::to_string(num_run) + ".png";
-    SaveImage(file_path1, beamformer.getResHost());
+    SaveImage(file_path1, beamformer.m_outputSize, beamformer.getResHost());
 #endif
 
     hilbertenvelope.getInput(beamformer.getRes());
@@ -130,7 +132,7 @@ int main(int argc, char **argv) {
 
 #if SAVE_IMG
     std::string file_path2 = fileout + "/frame_he_" + std::to_string(num_run) + ".png";
-    SaveImage(file_path2, hilbertenvelope.getResHost());
+    SaveImage(file_path2, hilbertenvelope.m_outputSize, hilbertenvelope.getResHost());
 #endif
 
     logcompressor.getInput(hilbertenvelope.getRes());
@@ -138,14 +140,14 @@ int main(int argc, char **argv) {
 
 #if SAVE_IMG
     std::string file_path3 = fileout + "/frame_lc_" + std::to_string(num_run) + ".png";
-    SaveImage(file_path3, logcompressor.getResHost());
+    SaveImage(file_path3, logcompressor.m_outputSize, logcompressor.getResHost());
 #endif
     scanconvertor.getInput(logcompressor.getRes());
     scanconvertor.SubmitKernel();
 
 #if SAVE_IMG
     std::string file_path4 = fileout + "/frame_sc_" + std::to_string(num_run) + ".png";
-    SaveImage1(file_path4, scanconvertor.getResHost());
+    SaveImage(file_path4, scanconvertor.m_outputSize, scanconvertor.getResHost());
 #endif
     num_run++;
 
@@ -165,7 +167,7 @@ int main(int argc, char **argv) {
   total_time += AvgVec(beamformer.memcpy_time);
   std::cout << "FPS with data copy : " << 1000 / total_time << std::endl;
 
-  if (params) delete params;
+  if (params != nullptr) delete params;
 
   return 0;
 }

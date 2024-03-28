@@ -25,7 +25,7 @@ static double AvgVec(std::vector<double> &vec) {
   return res/vec.size();
 } 
 
-static double Report_time(const std::string& msg, sycl::event e) {
+static double Report_time(const std::string& msg, sycl::event &e) {
   cl::sycl::cl_ulong time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 
