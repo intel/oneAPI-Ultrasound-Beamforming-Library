@@ -122,8 +122,8 @@ void stb_write_img_u8_t(const std::string img_name, size_t h, size_t w,
   delete[] data_u8_t;
 }
 
-void stb_write_img_u8_single_channel(const std::string img_name, size_t in_h,
-                                     size_t in_w, float *&r_input) {
+void stb_write_img_u8_single_channel(const std::string &img_name, size_t in_h,
+                                     size_t in_w, float *r_input) {
   // we need to store r, g, b data into on array.
   uint8_t *data_u8_t = new uint8_t[in_h * in_w];
   size_t index = 0;
@@ -153,15 +153,15 @@ void stb_write_img_u8_single_channel(const std::string img_name, size_t in_h,
   delete[] data_u8_t;
 }
 
-void SaveImage(std::string save_file_Name, float *res) {
+void SaveImage(std::string &save_file_Name, float *res) {
   stb_write_img_u8_single_channel(save_file_Name, 2000, 255, res);
 }
 
-void SaveImage1(std::string save_file_Name, float *res) {
+void SaveImage1(std::string &save_file_Name, float *res) {
   stb_write_img_u8_single_channel(save_file_Name, 2000, 1667, res);
 }
 
-void SaveImage(std::string save_file_Name, vec2i size, float *res) {
+void SaveImage(std::string &save_file_Name, vec2i size, float *res) {
   stb_write_img_u8_single_channel(save_file_Name, size.x, size.y, res);
 }
 

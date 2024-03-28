@@ -17,12 +17,12 @@ class ScanConverter {
   static constexpr int m_mappingMaxIterations = 1000;
   static constexpr double m_mappingDistanceThreshold = 1e-5;
 
-  ScanConverter(sycl::queue hq, float* input_addr, uint8_t* mask,
+  ScanConverter(sycl::queue &hq, float* input_addr, uint8_t* mask,
                 uint32_t* sampleIdx, float* weightX, float* weightY,
-                vec3s imageSize, RawParam *p_Params);
-  ScanConverter(sycl::queue hq, uint8_t* mask,
+                vec3s &imageSize, RawParam *p_Params);
+  ScanConverter(sycl::queue &hq, uint8_t* mask,
                 uint32_t* sampleIdx, float* weightX, float* weightY,
-                vec3s imageSize, RawParam *p_Params);
+                vec3s &imageSize, RawParam *p_Params);
   ~ScanConverter();
 
   template <typename InputType, typename OutputType>
@@ -37,15 +37,15 @@ class ScanConverter {
   float* getRes();
   float* getResHost();
 
-  vec2i m_outputSize;
+  vec2i m_outputSize = {0, 0};
   std::vector<double> comsuming_time;
 
  private:
   sycl::queue q;
 
-  size_t m_numScanlines;
-  size_t m_numSamples;
-  size_t m_filterLength;
+  size_t m_numScanlines = 0;
+  size_t m_numSamples = 0;
+  size_t m_filterLength = 0;
 
   float* input_dev = NULL;
   float* output_dev = NULL;
@@ -55,13 +55,13 @@ class ScanConverter {
 
   static constexpr double m_skewnessTestThreshold = 1e-6;
 
-  bool m_is2D;
+  bool m_is2D = true;
 
-  uint8_t* m_mask;
-  IndexType* m_sampleIdx;
-  WeightType* m_weightX;
-  WeightType* m_weightY;
-  WeightType* m_weightZ;
+  uint8_t* m_mask = NULL;
+  IndexType* m_sampleIdx = NULL;
+  WeightType* m_weightX = NULL;
+  WeightType* m_weightY = NULL;
+  WeightType* m_weightZ = NULL;
 
   vec3s m_imageSize = {0, 0, 0};
 

@@ -564,7 +564,8 @@ void rxBeamformingDTSPACEKernel(
     const LocationType *__restrict__ x_elemsDT, LocationType speedOfSound,
     LocationType dt, uint32_t additionalOffset, LocationType F,
     const float *window_data, const float window_scale,
-    ResultType *__restrict__ s, sycl::nd_item<3> item_ct1) {
+    ResultType *__restrict__ s,
+    sycl::nd_item<3> &item_ct1) {
   int r = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
           item_ct1.get_local_id(1);  //@suppress("Symbol is not resolved")
                                      //@suppress("Field cannot be resolved")
@@ -646,7 +647,7 @@ void rxBeamformingDTSPACEKernel(
     const LocationType *__restrict__ x_elemsDT, LocationType speedOfSound,
     LocationType dt, uint32_t additionalOffset, LocationType F,
     const float *window_data, const float window_scale,
-    ResultType *__restrict__ s, sycl::nd_item<3> item_ct1) {
+    ResultType *__restrict__ s, sycl::nd_item<3> &item_ct1) {
   int r = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
           item_ct1.get_local_id(1);  //@suppress("Symbol is not resolved")
                                      //@suppress("Field cannot be resolved")
@@ -727,7 +728,18 @@ Beamforming2D::Beamforming2D(sycl::queue &in_q) {
   rxElementXs = NULL;
   rxElementYs = NULL;
   window_data = NULL;
-  RFdata = NULL;
+  s = NULL;
+  rxDepths_dev = NULL;
+  rxElementXs_dev = NULL;
+  rxElementYs_dev = NULL;
+  window_data_dev = NULL;
+  RFdata_dev = NULL;
+  rxScanlines_dev = NULL;
+  s_dev = NULL;
+  m_mask = NULL;
+  m_sampleIdx = NULL;
+  m_weightX = NULL;
+  m_weightY = NULL;
 
   dt = 1.0 / 40000000.0;
   additionalOffset = 0;
@@ -1060,7 +1072,7 @@ int Beamforming2D::copy_data2dev() {
   return 1;
 }
 
-void Beamforming2D::SubmitKernel(int16_t *raw_ptr, size_t len) {
+void Beamforming2D::SubmitKernel(int16_t* raw_ptr, size_t len) {
   sycl::range<3> blockSize(1, 256, 1);
   sycl::range<3> gridSize(
       1,
@@ -1118,7 +1130,7 @@ void Beamforming2D::SubmitKernel(int16_t *raw_ptr, size_t len) {
   comsuming_time.push_back(Report_time(std::string("Beamforming kernel: "), e)); 
 }
 
-int Beamforming2D::read_one_frame2dev(int16_t *raw_ptr, size_t len) {
+int Beamforming2D::read_one_frame2dev(int16_t* raw_ptr, size_t len) {
   if (len == 0) {
     std::cout << "Error raw data frame size.\n";
     return 0;

@@ -22,69 +22,69 @@ class Beamforming2D {
 
   int GetInputImage(const char *Paramfilename, const char *Inputfilename, RawParam* &Params);
 
-  int read_one_frame2dev(int16_t *raw_ptr, size_t len);
+  int read_one_frame2dev(int16_t* raw_ptr, size_t len);
 
   int copy_data2dev();
 
-  void SubmitKernel(int16_t *raw_ptr, size_t len);
+  void SubmitKernel(int16_t* raw_ptr, size_t len);
 
   float *getRes();
 
   float *getResHost();
 
   sycl::queue q;
-  ScanlineRxParameters3D *rxScanlines;
-  float *rxDepths;
-  float *rxElementXs;
-  float *rxElementYs;
-  float *window_data;
-  int16_t *RFdata;
+  ScanlineRxParameters3D *rxScanlines = NULL;
+  float *rxDepths = NULL;
+  float *rxElementXs = NULL;
+  float *rxElementYs = NULL;
+  float *window_data = NULL;
+  int16_t *RFdata = NULL;
 
-  float *s;
+  float *s = NULL;
 
-  float *rxDepths_dev;
-  float *rxElementXs_dev;
-  float *rxElementYs_dev;
-  float *window_data_dev;
-  float window_scale;
-  int16_t *RFdata_dev;
-  ScanlineRxParameters3D *rxScanlines_dev;
+  float *rxDepths_dev = NULL;
+  float *rxElementXs_dev = NULL;
+  float *rxElementYs_dev = NULL;
+  float *window_data_dev = NULL;
+  float window_scale = 0;
+  int16_t *RFdata_dev = NULL;
+  ScanlineRxParameters3D *rxScanlines_dev = NULL;
 
-  float *s_dev;
+  float *s_dev = NULL;
 
-  uint Width;
-  uint Height;
+  uint Width = 0;
+  uint Height = 0;
 
-  size_t numElements;
-  size_t numReceivedChannels;
-  size_t numSamples;
-  size_t numTxScanlines;
-  size_t numRxScanlines;
-  size_t rxNumDepths;
-  vec2s scanlineLayout;
-  vec2s elementLayout;
-  double depth;
-  double samplingFrequency;
-  double speedOfSoundMMperS;
-  double dt;
+  size_t numElements = 0;
+  size_t numReceivedChannels = 0;
+  size_t numSamples = 0;
+  size_t numTxScanlines = 0;
+  size_t numRxScanlines = 0;
+  size_t rxNumDepths = 0;
+  vec2s scanlineLayout = {0, 0};
+  vec2s elementLayout = {0, 0};
+  double depth = 0;
+  double samplingFrequency = 0;
+  double speedOfSoundMMperS = 0;
+  double dt = 0;
 
-  int additionalOffset;
-  float fNumber;
-  float speedOfSound;
-  bool interpolateRFlines;
-  bool interpolateBetweenTransmits;
+  int additionalOffset = 0;
+  float fNumber = 0;
+  float speedOfSound = 0;
+  bool interpolateRFlines = 0;
+  bool interpolateBetweenTransmits = 0;
 
-  float windowParameter;
-  size_t numEntriesPerFunction;
-  BeamformingType mBeamformingType;
+  float windowParameter = 0;
+  size_t numEntriesPerFunction = 0;
+  BeamformingType mBeamformingType = BeamformingType::DelayAndSum;
 
   uint8_t *m_mask;
   uint32_t *m_sampleIdx;
   float *m_weightX;
   float *m_weightY;
 
-  vec3s m_imageSize;
-  vec2i m_outputSize;
+  vec3s m_imageSize = {0, 0, 0};
+  vec2i m_outputSize = {0, 0};
 
   std::vector<double> comsuming_time;
   std::vector<double> memcpy_time;
