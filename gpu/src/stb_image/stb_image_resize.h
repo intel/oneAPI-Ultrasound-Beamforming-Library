@@ -579,7 +579,7 @@ typedef struct {
 
 static const float stbir__max_uint8_as_float = 255.0f;
 static const float stbir__max_uint16_as_float = 65535.0f;
-static const double stbir__max_uint32_as_float = 4294967295.0;
+static const float stbir__max_uint32_as_float = 4294967295.0;
 
 static stbir__inline int stbir__min(int a, int b) { return a < b ? a : b; }
 
@@ -1379,7 +1379,7 @@ static void stbir__decode_scanline(stbir__info* stbir_info, int n) {
             stbir__edge_wrap(edge_horizontal, x, input_w) * channels;
         for (c = 0; c < channels; c++)
           decode_buffer[decode_pixel_index + c] =
-              (float)(((double)((const unsigned int*)
+              (float)(((float)((const unsigned int*)
                                     input_data)[input_pixel_index + c]) /
                       stbir__max_uint32_as_float);
       }
@@ -1392,13 +1392,13 @@ static void stbir__decode_scanline(stbir__info* stbir_info, int n) {
             stbir__edge_wrap(edge_horizontal, x, input_w) * channels;
         for (c = 0; c < channels; c++)
           decode_buffer[decode_pixel_index + c] = stbir__srgb_to_linear(
-              (float)(((double)((const unsigned int*)
+              (float)(((float)((const unsigned int*)
                                     input_data)[input_pixel_index + c]) /
                       stbir__max_uint32_as_float));
 
         if (!(stbir_info->flags & STBIR_FLAG_ALPHA_USES_COLORSPACE))
           decode_buffer[decode_pixel_index + alpha_channel] =
-              (float)(((double)((
+              (float)(((float)((
                           const unsigned int*)input_data)[input_pixel_index +
                                                           alpha_channel]) /
                       stbir__max_uint32_as_float);
@@ -1904,7 +1904,7 @@ static void stbir__encode_scanline(stbir__info* stbir_info, int num_pixels,
           int index = pixel_index + n;
           ((unsigned int*)output_buffer)[index] =
               (unsigned int)STBIR__ROUND_UINT(
-                  ((double)stbir__saturate(encode_buffer[index])) *
+                  ((float)stbir__saturate(encode_buffer[index])) *
                   stbir__max_uint32_as_float);
         }
       }
@@ -1918,7 +1918,7 @@ static void stbir__encode_scanline(stbir__info* stbir_info, int num_pixels,
           int index = pixel_index + nonalpha[n];
           ((unsigned int*)output_buffer)[index] =
               (unsigned int)STBIR__ROUND_UINT(
-                  ((double)stbir__linear_to_srgb(
+                  ((float)stbir__linear_to_srgb(
                       stbir__saturate(encode_buffer[index]))) *
                   stbir__max_uint32_as_float);
         }
@@ -1926,7 +1926,7 @@ static void stbir__encode_scanline(stbir__info* stbir_info, int num_pixels,
         if (!(stbir_info->flags & STBIR_FLAG_ALPHA_USES_COLORSPACE))
           ((unsigned int*)output_buffer)[pixel_index + alpha_channel] =
               (unsigned int)STBIR__ROUND_INT(
-                  ((double)stbir__saturate(
+                  ((float)stbir__saturate(
                       encode_buffer[pixel_index + alpha_channel])) *
                   stbir__max_uint32_as_float);
       }

@@ -4,11 +4,11 @@
 #include <oneapi/dpl/algorithm>
 #include <oneapi/dpl/execution>
 
-#include <CL/sycl.hpp>
+#include "sycl/sycl.hpp"
 #include <cassert>
 #include <cmath>
 #include "ScanConverter.h"
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 using namespace std;
 
@@ -17,10 +17,10 @@ class ScanConverterInternals {
   typedef ScanConverter::IndexType IndexType;
   typedef ScanConverter::WeightType WeightType;
 
-  static constexpr double m_tetrahedronTestDistanceThreshold = 1e-9;
+  static constexpr float m_tetrahedronTestDistanceThreshold = 1e-9f;
   static constexpr int m_mappingMaxIterations =
       ScanConverter::m_mappingMaxIterations;
-  static constexpr double m_mappingDistanceThreshold =
+  static constexpr float m_mappingDistanceThreshold =
       ScanConverter::m_mappingDistanceThreshold;
 
   template <typename Tf, typename Ti>
@@ -146,8 +146,8 @@ class ScanConverterInternals {
     vec3T<Tf> normalYHigh = normalize(cross((axy + daxy) - ay, day));
 
     // find t via binary search
-    vec2T<Tf> lowT = {0, 0};
-    vec2T<Tf> highT = {1, 1};
+  vec2T<Tf> lowT = {static_cast<Tf>(0.0f), static_cast<Tf>(0.0f)};
+  vec2T<Tf> highT = {static_cast<Tf>(1.0f), static_cast<Tf>(1.0f)};
     vec3T<Tf> lowConnX = pointPlaneConnection(a, normalXLow, x);
     vec3T<Tf> highConnX = pointPlaneConnection(ax, normalXHigh, x);
     vec3T<Tf> lowConnY = pointPlaneConnection(a, normalYLow, x);
@@ -156,10 +156,13 @@ class ScanConverterInternals {
     vec2T<Tf> highDist = {norm(highConnX), norm(highConnY)};
 
     if (dot(lowConnX, highConnX) > 0 || dot(lowConnY, highConnY) > 0) {
-      return std::pair<vec3T<Tf>, bool>(vec3T<Tf>{0, 0, 0}, false);
+    return std::pair<vec3T<Tf>, bool>(
+      vec3T<Tf>{static_cast<Tf>(0.0f), static_cast<Tf>(0.0f),
+          static_cast<Tf>(0.0f)},
+      false);
     }
 
-    vec2T<Tf> dist = {1e10, 1e10};
+  vec2T<Tf> dist = {static_cast<Tf>(1e10f), static_cast<Tf>(1e10f)};
     vec2T<Tf> t = (highT - lowT) / 2 + lowT;
     vec3T<Tf> planeBaseX1;
     vec3T<Tf> planeBaseY1;
@@ -233,15 +236,16 @@ void scanConvert2D(uint32_t numScanlines, uint32_t numSamples, uint32_t width,
 
   if (pixelPos.x < width && pixelPos.y < height) {
     IndexType pixelIdx = pixelPos.x + pixelPos.y * width;
-    float val = 0;
+    float val = 0.0f;
     if (mask[pixelIdx]) {
       IndexType sIdx = sampleIdx[pixelIdx];
       WeightType wX = weightX[pixelIdx];
       WeightType wY = weightY[pixelIdx];
 
-      val = (1 - wY) * ((1 - wX) * scanlines[sIdx] + wX * scanlines[sIdx + 1]) +
-            wY * ((1 - wX) * scanlines[sIdx + numScanlines] +
-                  wX * scanlines[sIdx + 1 + numScanlines]);
+  val = (1.0f - wY) *
+        ((1.0f - wX) * scanlines[sIdx] + wX * scanlines[sIdx + 1]) +
+    wY * ((1.0f - wX) * scanlines[sIdx + numScanlines] +
+      wX * scanlines[sIdx + 1 + numScanlines]);
     }
 
     image[pixelIdx] = clampCast<OutputType>(val);

@@ -4,9 +4,9 @@
 #include <oneapi/dpl/algorithm>
 #include <oneapi/dpl/execution>
 
-#include <CL/sycl.hpp>
+#include "sycl/sycl.hpp"
 #include "LogCompressor.h"
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 #include <cmath>
 
@@ -19,14 +19,14 @@ struct thrustLogcompress {
   // Thrust functor that computes
   // signal = log10(1 + a*signal)./log10(1 + a)
   // of the downscaled (_inMax) input signal
-  thrustLogcompress(double dynamicRange, In inMax, Out outMax, double scale)
+  thrustLogcompress(float dynamicRange, In inMax, Out outMax, float scale)
       : _inScale(static_cast<WorkType>(dynamicRange / inMax)),
         _scaleOverDenominator(static_cast<WorkType>(
-            scale * outMax / sycl::log10(dynamicRange + 1))){};
+            scale * outMax / sycl::log10(dynamicRange + 1.0f))){};
 
   Out operator()(const In& a) const {
-    WorkType val = sycl::log10(std::abs(static_cast<WorkType>(a)) * _inScale +
-                               (WorkType)1) *
+  WorkType val = sycl::log10(sycl::fabs(static_cast<WorkType>(a)) * _inScale +
+                               static_cast<WorkType>(1.0f)) *
                    _scaleOverDenominator;
     return clampCast<Out>(val);
   }
@@ -54,8 +54,8 @@ void LogCompressor::getInput(float *input){
   input_dev = input;
 }
 
-void LogCompressor::compress(vec3s &size, double dynamicRange, double scale,
-                             double inMax) {
+void LogCompressor::compress(vec3s &size, float dynamicRange, float scale,
+                             float inMax) {
   const float* inImageData = input_dev;
   size_t width = size.x;
   size_t height = size.y;
@@ -65,18 +65,18 @@ void LogCompressor::compress(vec3s &size, double dynamicRange, double scale,
   if (std::is_integral<float>::value) {
     outMax = std::numeric_limits<float>::max();
   } else if (std::is_floating_point<float>::value) {
-    outMax = static_cast<float>(255.0);
+  outMax = 255.0f;
   }
 
   thrustLogcompress<float, float, WorkType> c(
-    sycl::pow<double>(10, (dynamicRange / 20)), static_cast<float>(inMax),
+  pow<float>(10.0f, (dynamicRange / 20.0f)), static_cast<float>(inMax),
     outMax, scale);
 
   auto inImageData_t = inImageData;
   auto pComprGpu_t = output_dev;
 
   static long log_call_count = 0;
-  static std::chrono::duration<double, std::milli> log_total_duration(0);
+  static std::chrono::duration<float, std::milli> log_total_duration(0);
 
   sycl::event log_event = q.submit([&](sycl::handler& h) {
     h.parallel_for<class LogCompress>(
@@ -96,11 +96,11 @@ void LogCompressor::SubmitKernel() {
   m_input_size.z = 1;
 
 // Todo: the meanings of the params
-  double m_dynamicRange = 80;
+  float m_dynamicRange = 80.0f;
 
-  double m_scale = 1;
+  float m_scale = 1.0f;
 
-  double inMax = 32600;
+  float inMax = 32600.0f;
 
   compress(m_input_size, m_dynamicRange, m_scale, inMax);
 }

@@ -7,7 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 class ScanConverter {
  public:
@@ -15,7 +15,7 @@ class ScanConverter {
   typedef float WeightType;
 
   static constexpr int m_mappingMaxIterations = 1000;
-  static constexpr double m_mappingDistanceThreshold = 1e-5;
+  static constexpr float m_mappingDistanceThreshold = 1e-5;
 
   ScanConverter(sycl::queue &hq, float* input_addr, uint8_t* mask,
                 uint32_t* sampleIdx, float* weightX, float* weightY,
@@ -38,7 +38,7 @@ class ScanConverter {
   float* getResHost();
 
   vec2i m_outputSize = {0, 0};
-  std::vector<double> comsuming_time;
+  std::vector<float> comsuming_time;
 
  private:
   sycl::queue q;
@@ -53,7 +53,7 @@ class ScanConverter {
 
   ScanlineRxParameters3D* scanlines = NULL;
 
-  static constexpr double m_skewnessTestThreshold = 1e-6;
+  static constexpr float m_skewnessTestThreshold = 1e-6;
 
   bool m_is2D = true;
 

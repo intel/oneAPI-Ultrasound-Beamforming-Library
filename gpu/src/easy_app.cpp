@@ -5,31 +5,52 @@
 #include "HilbertFirEnvelope.h"
 #include "LogCompressor.h"
 #include "ScanConverter.h"
-#include "shm.h"
-#include "sycl_help.hpp"
+#include "sycl_help.h"
 
-#include <numeric>
+#include <algorithm>
 #include <cstdlib>
+#include <filesystem>
+#include <numeric>
 
 using namespace std;
 using namespace sycl;
 
+const size_t raw_len = 128 * 64 * 2337;
+
 #define SAVE_IMG 1
 
 int main(int argc, char **argv) {
+  if (argc < 3) {
+    std::cerr << "Usage: " << argv[0]
+              << " <param_file> <raw_file> [output_dir] [run_steps]" << std::endl;
+    return 1;
+  }
+
   const char *fileparam = argv[1];
   const char *filein = argv[2];
-  int run_steps = argv[3] ?  atoi(argv[3]) : 8;
 
   string fileout("./res");
-
-  if(argc == 4)
+  if (argc >= 4 && argv[3] && argv[3][0] != '\0') {
     fileout = string(argv[3]);
+  }
 
-  int mkdir = mkpath(fileout);
+  int run_steps = 8;
+  if (argc >= 5 && argv[4] && argv[4][0] != '\0') {
+    run_steps = std::max(1, atoi(argv[4]));
+  }
+
+  try {
+    if (!std::filesystem::exists(fileout)) {
+      std::filesystem::create_directories(fileout);
+    }
+  } catch (const std::filesystem::filesystem_error &e) {
+    std::cerr << "Failed to create output directory '" << fileout
+              << "': " << e.what() << std::endl;
+    return 1;
+  }
 
   auto property_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
+      sycl::property_list{sycl::property::queue::enable_profiling()};
   sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
   std::cout << std::endl
             << "Selected device: "
@@ -66,7 +87,7 @@ int main(int argc, char **argv) {
     beamformer.SubmitKernel(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
 
 #if SAVE_IMG
-    std::string file_path1 = fileout + "frame_bf_" + std::to_string(num_run) + ".png";
+    std::string file_path1 = fileout + "/frame_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.m_outputSize, beamformer.getResHost());
 #endif
 
@@ -74,7 +95,7 @@ int main(int argc, char **argv) {
     hilbertenvelope.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path2 = fileout + "frame_he_" + std::to_string(num_run) + ".png";
+    std::string file_path2 = fileout + "/frame_he_" + std::to_string(num_run) + ".png";
     SaveImage(file_path2, hilbertenvelope.m_outputSize, hilbertenvelope.getResHost());
 #endif
 
@@ -82,7 +103,7 @@ int main(int argc, char **argv) {
     logcompressor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path3 = fileout + "frame_lc_" + std::to_string(num_run) + ".png";
+    std::string file_path3 = fileout + "/frame_lc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path3, logcompressor.m_outputSize, logcompressor.getResHost());
 #endif
 
@@ -90,14 +111,14 @@ int main(int argc, char **argv) {
     scanconvertor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path4 = fileout + "frame_sc_" + std::to_string(num_run) + ".png";
+    std::string file_path4 = fileout + "/frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path4, scanconvertor.m_outputSize, scanconvertor.getResHost());
 #endif
 
     num_run++;
   }
 
-  double total_time = 0;
+  float total_time = 0;
 
   std::cout << std::endl << "====Summary====" << std::endl;
   std::cout << "Raw data copy avg time for 1 frame : " << AvgVec(beamformer.memcpy_time) << " ms." << std::endl;

@@ -4,13 +4,14 @@
 #ifndef ULTRASOUND_H
 #define ULTRASOUND_H
 
-#include <CL/sycl.hpp>
+#include "sycl/sycl.hpp"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "utility.hpp"
+#include <iomanip>
+#include "ultrasound_utility.h"
 
 using namespace std;
 
@@ -52,8 +53,8 @@ class Beamforming2D {
 
   float *s_dev = NULL;
 
-  uint Width = 0;
-  uint Height = 0;
+  uint32_t Width = 0;
+  uint32_t Height = 0;
 
   size_t numElements = 0;
   size_t numReceivedChannels = 0;
@@ -63,10 +64,10 @@ class Beamforming2D {
   size_t rxNumDepths = 0;
   vec2s scanlineLayout = {0, 0};
   vec2s elementLayout = {0, 0};
-  double depth = 0;
-  double samplingFrequency = 0;
-  double speedOfSoundMMperS = 0;
-  double dt = 0;
+  float depth = 0;
+  float samplingFrequency = 0;
+  float speedOfSoundMMperS = 0;
+  float dt = 0;
 
   int additionalOffset = 0;
   float fNumber = 0;
@@ -86,8 +87,8 @@ class Beamforming2D {
   vec3s m_imageSize = {0, 0, 0};
   vec2i m_outputSize = {0, 0};
 
-  std::vector<double> comsuming_time;
-  std::vector<double> memcpy_time;
+  std::vector<float> comsuming_time;
+  std::vector<float> memcpy_time;
 };
 
 #endif

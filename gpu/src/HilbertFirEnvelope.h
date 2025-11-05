@@ -16,8 +16,8 @@
 #include <string>
 #include <vector>
 
-#include <CL/sycl.hpp>
-#include "utility.hpp"
+#include "sycl/sycl.hpp"
+#include "ultrasound_utility.h"
 
 /// A factory for FIR filters
 class FirFilterFactory {
@@ -43,9 +43,9 @@ class FirFilterFactory {
   static ElementType *createFilter(sycl::queue &q, const size_t &length,
                                    const FilterType &type,
                                    const FilterWindow &window,
-                                   const double &samplingFrequency = 2.0,
-                                   const double &frequency = 0.0,
-                                   const double &bandwidth = 0.0) {
+                                   const float &samplingFrequency = 2.0,
+                                   const float &frequency = 0.0,
+                                   const float &bandwidth = 0.0) {
     ElementType *filter = createFilterNoWindow<ElementType>(
         length, type, samplingFrequency, frequency, bandwidth, q);
     applyWindowToFilter<ElementType>(length, filter, window);
@@ -60,9 +60,9 @@ class FirFilterFactory {
   template <typename ElementType>
   static ElementType *createFilterNoWindow(const size_t &length,
                                            const FilterType &type,
-                                           const double &samplingFrequency,
-                                           const double &frequency,
-                                           const double &bandwidth,
+                                           const float &samplingFrequency,
+                                           const float &frequency,
+                                           const float &bandwidth,
                                            sycl::queue &q) {
     if (type == FilterTypeHighPass || type == FilterTypeBandPass ||
         type == FilterTypeLowPass) {
@@ -122,8 +122,8 @@ class FirFilterFactory {
             return static_cast<ElementType>(2.0 * omegaBandwidth / M_PI);
           } else {
             return static_cast<ElementType>(
-                2.0 * cos(omega * n - halfWidth) * omegaBandwidth / M_PI *
-                sin(omegaBandwidth * (n - halfWidth)) /
+                2.0 * sycl::cos(omega * n - halfWidth) * omegaBandwidth / M_PI *
+                sycl::sin(omegaBandwidth * (n - halfWidth)) /
                 (omegaBandwidth * (n - halfWidth)));
           }
         };
@@ -135,7 +135,7 @@ class FirFilterFactory {
             return static_cast<ElementType>(omega / M_PI);
           } else {
             return static_cast<ElementType>(omega / M_PI *
-                                            sin(omega * (n - halfWidth)) /
+                                            sycl::sin(omega * (n - halfWidth)) /
                                             (omega * (n - halfWidth)));
           }
         };
@@ -164,18 +164,18 @@ class FirFilterFactory {
       case FilterWindowHann:
         windowFunction = [maxN](int n) -> ElementType {
           return static_cast<ElementType>(0.50 -
-                                          0.50 * cos(2 * M_PI * n / maxN));
+                                          0.50 * sycl::cos(2 * M_PI * n / maxN));
         };
         break;
       case FilterWindowHamming:
         windowFunction = [maxN](int n) -> ElementType {
           return static_cast<ElementType>(0.54 -
-                                          0.46 * cos(2 * M_PI * n / maxN));
+                                          0.46 * sycl::cos(2 * M_PI * n / maxN));
         };
         break;
       case FilterWindowKaiser:
         windowFunction = [maxN, beta](int n) -> ElementType {
-          double argument =
+          float argument =
               beta *
               sycl::sqrt(1.0 - (2 * ((ElementType)n - maxN / 2) / maxN) *
                                    (2 * ((ElementType)n - maxN / 2) / maxN));
@@ -198,15 +198,15 @@ class FirFilterFactory {
 
   template <typename ElementType>
   static void normalizeGain(const size_t &length, ElementType *filter,
-                            double samplingFrequency, double frequency) {
+                            float samplingFrequency, float frequency) {
     ElementType omega =
         static_cast<ElementType>(2 * M_PI * frequency / samplingFrequency);
     ElementType gainR = 0;
     ElementType gainI = 0;
 
     for (int k = 0; k < length; k++) {
-      gainR += filter[k] * cos(omega * (ElementType)k);
-      gainI += filter[k] * sin(omega * (ElementType)k);
+      gainR += filter[k] * sycl::cos(omega * (ElementType)k);
+      gainI += filter[k] * sycl::sin(omega * (ElementType)k);
     }
     ElementType gain = sycl::sqrt(gainR * gainR + gainI * gainI);
     for (int k = 0; k < length; k++) {
@@ -221,9 +221,9 @@ class FirFilterFactory {
     static const int factorial[9] = {1,   2,    6,     24,    120,
                                      720, 5040, 40320, 362880};
     for (int k = 1; k < 10; k++) {
-      T xPower = pow(x / (T)2.0, (T)k);
+      T xPower = sycl::pow(x / (T)2.0, (T)k);
       // 1, 2, 6, 24, 120, 720, 5040, 40320, 362880
-      sum += pow(xPower / (T)factorial[k - 1], (T)2.0);
+      sum += sycl::pow(xPower / (T)factorial[k - 1], (T)2.0);
     }
     return (T)1.0 + sum;
   }
@@ -244,7 +244,7 @@ class HilbertFirEnvelope {
   float *getResHost();
 
   vec2i m_outputSize;
-  std::vector<double> comsuming_time;
+  std::vector<float> comsuming_time;
 
  private:
   sycl::queue q;
