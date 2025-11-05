@@ -50,17 +50,17 @@ std::istream &operator>>(std::istream &is, ScanlineRxParameters3D &params) {
   }
   return is;
 }
-void convertToDtSpace(double dt, double &speedOfSoundMMperS,
+void convertToDtSpace(float dt, float &speedOfSoundMMperS,
                       size_t numTransducerElements, int numRxScanlines,
                       int rxNumDepths,
                       vector<vector<ScanlineRxParameters3D>> &cP,
                       float *pRxDepths, float *pRxElementXs) {
-  double tspeedOfSoundMMperS = speedOfSoundMMperS;
-  double oldFactor = 1;
-  double oldFactorTime = 1;
+  float tspeedOfSoundMMperS = speedOfSoundMMperS;
+  float oldFactor = 1;
+  float oldFactorTime = 1;
 
-  double factor = 1 / oldFactor / (tspeedOfSoundMMperS * dt);
-  double factorTime = 1 / oldFactorTime / dt;
+  float factor = 1 / oldFactor / (tspeedOfSoundMMperS * dt);
+  float factorTime = 1 / oldFactorTime / dt;
 
   for (size_t i = 0; i < numRxScanlines; i++) {
     cP[i][0].position.x = cP[i][0].position.x * factor;
@@ -90,22 +90,22 @@ T windowFunction(const WindowType &type, const T &relativeIndex,
                  const T &windowParameter) {
   switch (type) {
     case WindowRectangular:
-      return 1.0;
+      return static_cast<T>(1.0f);
     case WindowHann:
       return (1 - windowParameter) *
-                 (0.5f - 0.5f * std::cos(2 * static_cast<T>(M_PI) *
+                 (0.5f - 0.5f * sycl::cos(2 * static_cast<T>(M_PI) *
                                          ((relativeIndex + 1) * 0.5f))) +
              windowParameter;
     case WindowHamming:
       return (1 - windowParameter) *
-                 (0.54f - 0.46f * std::cos(2 * static_cast<T>(M_PI) *
+                 (0.54f - 0.46f * sycl::cos(2 * static_cast<T>(M_PI) *
                                            ((relativeIndex + 1) * 0.5f))) +
              windowParameter;
     case WindowGauss:
       return static_cast<T>(
-          1.0 / (windowParameter * sqrt(2.0 * M_PI)) *
-          exp((-1.0 / 2.0) * (relativeIndex / windowParameter) *
-              (relativeIndex / windowParameter)));
+          1.0f / (windowParameter * sycl::sqrt(2.0f * static_cast<T>(M_PI))) *
+          sycl::exp(static_cast<T>(-0.5f) * (relativeIndex / windowParameter) *
+                    (relativeIndex / windowParameter)));
     default:
       return 0;
   }
@@ -129,20 +129,20 @@ void WindowData(WindowType type, float windowParameter,
   }
 }
 
-static constexpr double m_skewnessTestThreshold = 1e-6;
+static constexpr float m_skewnessTestThreshold = 1e-6f;
 static constexpr int m_mappingMaxIterations = 1000;
-static constexpr double m_mappingDistanceThreshold = 1e-5;
+static constexpr float m_mappingDistanceThreshold = 1e-5f;
 vec3 m_bbMin = {0, 0, 0};
 vec3 m_bbMax = {0, 0, 0};
 
-double barycentricCoordinate2D(const vec2 &a, const vec2 &b, const vec2 &c) {
+float barycentricCoordinate2D(const vec2 &a, const vec2 &b, const vec2 &c) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 bool pointInsideTriangle(const vec2 &a, const vec2 &b, const vec2 &c,
                          const vec2 &p) {
-  double w0 = barycentricCoordinate2D(b, c, p);
-  double w1 = barycentricCoordinate2D(c, a, p);
-  double w2 = barycentricCoordinate2D(a, b, p);
+  float w0 = barycentricCoordinate2D(b, c, p);
+  float w1 = barycentricCoordinate2D(c, a, p);
+  float w2 = barycentricCoordinate2D(a, b, p);
 
   // Test if p is on or inside all edges
   return (w0 >= 0 && w1 >= 0 && w2 >= 0);
@@ -155,30 +155,30 @@ vec3 pointLineConnection(const vec3 &a, const vec3 &da, const vec3 &x) {
 }
 
 vec2 mapToParameters2D(const vec3 &a, const vec3 &b, const vec3 &da,
-                       const vec3 &db, double startDepth, double endDepth,
+                       const vec3 &db, float startDepth, float endDepth,
                        const vec3 &x) {
   // find t via binary search
-  double lowT = 0;
-  double highT = 1;
+  float lowT = 0.0f;
+  float highT = 1.0f;
   vec3 lowConn = pointLineConnection(a, da, x);
   vec3 highConn = pointLineConnection(b, db, x);
-  double lowDist = norm(lowConn);
-  double highDist = norm(highConn);
+  float lowDist = norm(lowConn);
+  float highDist = norm(highConn);
 
   if (highConn.x == 0 && highConn.y == 0 && highConn.z == 0) {
-    double t = highT;
-    double d = norm(x - b);
+    float t = highT;
+    float d = norm(x - b);
     return {t, d};
   } else if (lowConn.x == 0 && lowConn.y == 0 && lowConn.z == 0) {
-    double t = lowT;
-    double d = norm(x - a);
+    float t = lowT;
+    float d = norm(x - a);
     return {t, d};
   }
 
   assert(dot(lowConn, highConn) < 0);
 
-  double dist = 1e10;
-  double t = (highT - lowT) / 2 + lowT;
+  float dist = 1e10f;
+  float t = (highT - lowT) / 2 + lowT;
   vec3 lineBase;
   for (size_t numIter = 0;
        numIter < m_mappingMaxIterations && dist > m_mappingDistanceThreshold;
@@ -202,7 +202,7 @@ vec2 mapToParameters2D(const vec3 &a, const vec3 &b, const vec3 &da,
       lowDist = dist;
     }
   }
-  double d = norm(x - lineBase);
+  float d = norm(x - lineBase);
 
   return {t, d};
 }
@@ -210,13 +210,13 @@ vec2 mapToParameters2D(const vec3 &a, const vec3 &b, const vec3 &da,
 // Calculate params for ScanConvertor Node
 void updateInternals(vector<uint8_t> &m_mask, vector<float> &m_weightX,
                      vector<float> &m_weightY, vector<uint32_t> &m_sampleIdx,
-                     vec3s &m_imageSize, vec2s layout, double endDepth,
+                     vec3s &m_imageSize, vec2s layout, float endDepth,
                      vector<vector<ScanlineRxParameters3D>> &scanlines,
                      int numSamples, int NumScanlines = 255,
-                     double resolution = 0.022511) {
+                     float resolution = 0.022511f) {
   // Check the scanline configuration for validity
-  double startDepth = 0;
-  double SampleDistance = endDepth / (numSamples - 1);
+  float startDepth = 0.0f;
+  float SampleDistance = endDepth / static_cast<float>(numSamples - 1);
   resolution = SampleDistance;
 
   bool scanlinesGood = true;
@@ -299,10 +299,10 @@ void updateInternals(vector<uint8_t> &m_mask, vector<float> &m_weightX,
 
   if (scanlinesGood) {
     // find scan bounding box
-    vec3 bbMin{numeric_limits<double>::max(), numeric_limits<double>::max(),
-               numeric_limits<double>::max()};
-    vec3 bbMax{-numeric_limits<double>::max(), -numeric_limits<double>::max(),
-               -numeric_limits<double>::max()};
+    vec3 bbMin{numeric_limits<float>::max(), numeric_limits<float>::max(),
+               numeric_limits<float>::max()};
+    vec3 bbMax{-numeric_limits<float>::max(), -numeric_limits<float>::max(),
+               -numeric_limits<float>::max()};
     for (size_t scanlineIdxY = 0; scanlineIdxY < layout.y; scanlineIdxY++) {
       for (size_t scanlineIdxX = 0; scanlineIdxX < layout.x; scanlineIdxX++) {
         vec3 p1 = scanlines[scanlineIdxX][scanlineIdxY].getPoint(startDepth);
@@ -385,9 +385,9 @@ void updateInternals(vector<uint8_t> &m_mask, vector<float> &m_weightX,
                     scanlines[scanlineIdxX + 1][scanlineIdxY].position,
                     scanlines[scanlineIdxX][scanlineIdxY].direction,
                     scanlines[scanlineIdxX + 1][scanlineIdxY].direction,
-                    startDepth, endDepth, {pixelPos.x, pixelPos.y, 0.0});
-                double t = params.x;
-                double d = params.y;
+                    startDepth, endDepth, {pixelPos.x, pixelPos.y, 0.0f});
+                float t = params.x;
+                float d = params.y;
 
                 uint32_t sampleIdxScanline =
                     static_cast<uint32_t>(std::floor(d / SampleDistance));
@@ -432,7 +432,7 @@ static ResultType sampleBeamform2D(
        elemIdxX < txParams.lastActiveElementIndex.x; elemIdxX++) {
     int32_t channelIdx = elemIdxX % numReceivedChannels;
     LocationType x_elem = x_elemsDT[elemIdxX];
-    if (abs(x_elem - scanline_x) <= aDT) {
+  if (sycl::fabs(x_elem - scanline_x) <= aDT) {
       float relativeIndex = (x_elem - scanline_x) * invMaxElementDistance;
       float relativeIndexClamped =
           sycl::min(sycl::max(relativeIndex, -1.0f), 1.0f);
@@ -456,7 +456,7 @@ static ResultType sampleBeamform2D(
                       txScanlineIdx * numReceivedChannels * numTimesteps] +
                delayf * RF[(delay + 1) + channelIdx * numTimesteps +
                            txScanlineIdx * numReceivedChannels * numTimesteps]);
-        } else if (delay < numTimesteps && delayf == 0.0) {
+  } else if (delay < numTimesteps && delayf == 0.0f) {
           sample +=
               weight * RF[delay + channelIdx * numTimesteps +
                           txScanlineIdx * numReceivedChannels * numTimesteps];
@@ -503,7 +503,7 @@ static ResultType sampleBeamform2D(
        elemIdxX < txParams.lastActiveElementIndex.x; elemIdxX++) {
     int32_t channelIdx = elemIdxX % numReceivedChannels;
     LocationType x_elem = x_elemsDT[elemIdxX];
-    if (abs(x_elem - scanline_x) <= aDT) {
+  if (sycl::fabs(x_elem - scanline_x) <= aDT) {
       float relativeIndex = (x_elem - scanline_x) * invMaxElementDistance;
       float relativeIndexClamped =
           sycl::min(sycl::max(relativeIndex, -1.0f), 1.0f);
@@ -527,7 +527,7 @@ static ResultType sampleBeamform2D(
                       txScanlineIdx * numReceivedChannels * numTimesteps] +
                delayf * RF[(delay + 1) + channelIdx * numTimesteps +
                            txScanlineIdx * numReceivedChannels * numTimesteps]);
-        } else if (delay < numTimesteps && delayf == 0.0) {
+  } else if (delay < numTimesteps && delayf == 0.0f) {
           sample +=
               weight * RF[delay + channelIdx * numTimesteps +
                           txScanlineIdx * numReceivedChannels * numTimesteps];
@@ -585,7 +585,8 @@ void rxBeamformingDTSPACEKernel(
     LocationType dirZ = scanline.direction.z;
     LocationType maxElementDistance =
         static_cast<LocationType>(scanline.maxElementDistance.x);
-    LocationType invMaxElementDistance = 1 / sycl::min(aDT, maxElementDistance);
+  LocationType invMaxElementDistance =
+    static_cast<LocationType>(1.0f) / sycl::min(aDT, maxElementDistance);
 
     float sInterp = 0.0f;
 
@@ -609,7 +610,7 @@ void rxBeamformingDTSPACEKernel(
           k < std::extent<decltype(scanline.txWeights)>::value) ||
          (!interpolateBetweenTransmits && k == highestWeightIndex);
          k++) {
-      if (scanline.txWeights[k] > 0.0) {
+  if (scanline.txWeights[k] > 0.0f) {
         ScanlineRxParameters3D::TransmitParameters txParams =
             scanline.txParameters[k];
         uint32_t txScanlineIdx = txParams.txScanlineIdx;
@@ -667,7 +668,8 @@ void rxBeamformingDTSPACEKernel(
     LocationType dirZ = scanline.direction.z;
     LocationType maxElementDistance =
         static_cast<LocationType>(scanline.maxElementDistance.x);
-    LocationType invMaxElementDistance = 1 / sycl::min(aDT, maxElementDistance);
+  LocationType invMaxElementDistance =
+    static_cast<LocationType>(1.0f) / sycl::min(aDT, maxElementDistance);
 
     float sInterp = 0.0f;
 
@@ -691,7 +693,7 @@ void rxBeamformingDTSPACEKernel(
           k < std::extent<decltype(scanline.txWeights)>::value) ||
          (!interpolateBetweenTransmits && k == highestWeightIndex);
          k++) {
-      if (scanline.txWeights[k] > 0.0) {
+  if (scanline.txWeights[k] > 0.0f) {
         ScanlineRxParameters3D::TransmitParameters txParams =
             scanline.txParameters[k];
         uint32_t txScanlineIdx = txParams.txScanlineIdx;
@@ -741,16 +743,16 @@ Beamforming2D::Beamforming2D(sycl::queue &in_q) {
   m_weightX = NULL;
   m_weightY = NULL;
 
-  dt = 1.0 / 40000000.0;
+  dt = 1.0f / 40000000.0f;
   additionalOffset = 0;
-  fNumber = 1;
+  fNumber = 1.0f;
   speedOfSound = 0;
   interpolateRFlines = true;
   interpolateBetweenTransmits = false;
 
-  windowParameter = 0.5;
+  windowParameter = 0.5f;
   numEntriesPerFunction = 64;
-  window_scale = 31.5;
+  window_scale = 31.5f;
 }
 
 Beamforming2D::~Beamforming2D() {
@@ -1066,8 +1068,8 @@ int Beamforming2D::copy_data2dev() {
 #else 
   RFdata_dev = NULL;
 #endif
-  if(NULL == RFdata_dev)
-    malloc_mem_log(std::string("RFdata_dev"));
+  // if(NULL == RFdata_dev)
+  //   malloc_mem_log(std::string("RFdata_dev"));
 
   return 1;
 }

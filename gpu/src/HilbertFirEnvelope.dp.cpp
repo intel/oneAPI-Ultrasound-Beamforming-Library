@@ -17,7 +17,8 @@ void kernelFilterDemodulation(
 
   scanlineIdx *= H_VEC_SIZE;
   if (scanlineIdx < numScanlines && sampleIdx < numSamples) {
-    sycl::vec<HilbertFirEnvelope::WorkType, H_VEC_SIZE> accumulator(0.0);
+  sycl::vec<HilbertFirEnvelope::WorkType, H_VEC_SIZE> accumulator(
+    HilbertFirEnvelope::WorkType{0});
 
     int startPoint = sampleIdx - filterLength / 2;
     int endPoint = sampleIdx + filterLength / 2;
@@ -26,7 +27,8 @@ void kernelFilterDemodulation(
     for (int currentSample = startPoint; currentSample <= endPoint;
          currentSample++, currentFilterElement++) {
       if (currentSample >= 0 && currentSample < numSamples) {
-        sycl::vec<HilbertFirEnvelope::WorkType, H_VEC_SIZE> vec_sample(0.0);
+    sycl::vec<HilbertFirEnvelope::WorkType, H_VEC_SIZE> vec_sample(
+      HilbertFirEnvelope::WorkType{0});
 #pragma unroll
         for (int c = 0; c < H_VEC_SIZE; c++) {
           vec_sample[c] =

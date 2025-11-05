@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     sem_post(nempty);
   }
 
-  double total_time = 0;
+  float total_time = 0;
 
   std::cout << std::endl << "====Summary====" << std::endl;
   std::cout << "Raw data copy avg time for 1 frame : " << AvgVec(beamformer.memcpy_time) << " ms." << std::endl;

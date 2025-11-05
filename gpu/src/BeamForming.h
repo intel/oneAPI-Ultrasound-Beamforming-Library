@@ -63,10 +63,10 @@ class Beamforming2D {
   size_t rxNumDepths = 0;
   vec2s scanlineLayout = {0, 0};
   vec2s elementLayout = {0, 0};
-  double depth = 0;
-  double samplingFrequency = 0;
-  double speedOfSoundMMperS = 0;
-  double dt = 0;
+  float depth = 0;
+  float samplingFrequency = 0;
+  float speedOfSoundMMperS = 0;
+  float dt = 0;
 
   int additionalOffset = 0;
   float fNumber = 0;
@@ -86,8 +86,8 @@ class Beamforming2D {
   vec3s m_imageSize = {0, 0, 0};
   vec2i m_outputSize = {0, 0};
 
-  std::vector<double> comsuming_time;
-  std::vector<double> memcpy_time;
+  std::vector<float> comsuming_time;
+  std::vector<float> memcpy_time;
 };
 
 #endif

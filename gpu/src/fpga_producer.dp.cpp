@@ -37,7 +37,7 @@ static void Report_time(const std::string &msg, sycl::event &e) {
   cl::sycl::cl_ulong time_end =
       e.get_profiling_info<sycl::info::event_profiling::command_end>();
 
-  double elapsed = (time_end - time_start) / 1e6;
+  float elapsed = (time_end - time_start) / 1e6;
   std::cout << msg << elapsed << " milliseconds\n";
 }
 
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
                "page-aligned): "
             << ptr_2 << std::endl;
 
-  // add posix semaphore to implement "double buffering"
+  // add posix semaphore to implement "float buffering"
   sem_t *nempty;
   sem_t *nstored;
 

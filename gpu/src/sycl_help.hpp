@@ -23,7 +23,6 @@
 #define SHOW_IMG_CHANNELS 1
 
 using namespace std;
-using namespace cl::sycl;
 
 int mkpath(std::string &s)
 {
@@ -130,7 +129,7 @@ void stb_write_img_u8_single_channel(const std::string &img_name, size_t in_h,
   for (size_t i = 0; i < in_h; i++) {
     for (size_t j = 0; j < in_w; j++) {
       data_u8_t[index++] = static_cast<uint8_t>(
-          std::min(static_cast<double>(abs(r_input[i * in_w + j])), 255.0));
+          std::min(static_cast<float>(abs(r_input[i * in_w + j])), 255.0f));
     }
   }
 
