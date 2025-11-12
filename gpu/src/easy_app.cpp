@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
   size_t num_run = 0;
   size_t raw_len = params->numReceivedChannels * params->numSamples * params->numTxScanlines;
-
+  size_t run_steps = 8;
   while(num_run < run_steps) {
     beamformer.read_one_frame2dev(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
     beamformer.SubmitKernel(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
