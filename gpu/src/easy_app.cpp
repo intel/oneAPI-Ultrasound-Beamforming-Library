@@ -13,11 +13,16 @@
 using namespace std;
 using namespace sycl;
 
+const size_t raw_len = 128 * 64 * 2337;
+
 #define SAVE_IMG 1
+
+const char* fileparam = "linearProbe_IPCAI_128-2.mock";
+const char* filein = "linearProbe_IPCAI_128-2_0.raw";
 
 int main(int argc, char **argv) {
   auto property_list =
-      cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
+      sycl::property_list{sycl::property::queue::enable_profiling()};
   sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
   std::cout << std::endl
             << "Selected device: "
