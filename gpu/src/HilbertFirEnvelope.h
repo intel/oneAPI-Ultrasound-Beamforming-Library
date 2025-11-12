@@ -17,7 +17,7 @@
 #include <vector>
 
 #include <CL/sycl.hpp>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 /// A factory for FIR filters
 class FirFilterFactory {

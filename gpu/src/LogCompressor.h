@@ -6,7 +6,7 @@
 
 #include <CL/sycl.hpp>
 #include <memory>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 typedef vec3T<size_t> vec3s;
 

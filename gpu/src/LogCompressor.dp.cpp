@@ -6,7 +6,7 @@
 
 #include <CL/sycl.hpp>
 #include "LogCompressor.h"
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 #include <cmath>
 

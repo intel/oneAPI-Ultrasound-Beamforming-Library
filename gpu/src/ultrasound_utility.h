@@ -1,8 +1,7 @@
 // Copyright (C) 2022 Intel Corporation
 // SPDX-License-Identifier: LGPL-2.1-or-later
-
-#ifndef _UTILITY_
-#define _UTILITY_
+#ifndef _ULTRASOUND_UTILITY_
+#define _ULTRASOUND_UTILITY_
 
 #include <cmath>
 #include <iomanip>

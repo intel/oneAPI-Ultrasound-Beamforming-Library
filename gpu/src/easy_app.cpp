@@ -6,7 +6,7 @@
 #include "LogCompressor.h"
 #include "ScanConverter.h"
 #include "shm.h"
-#include "sycl_help.hpp"
+#include "sycl_help.h"
 
 #include <numeric>
 #include <cstdlib>
@@ -17,17 +17,6 @@ using namespace sycl;
 #define SAVE_IMG 1
 
 int main(int argc, char **argv) {
-  const char *fileparam = argv[1];
-  const char *filein = argv[2];
-  int run_steps = argv[3] ?  atoi(argv[3]) : 8;
-
-  string fileout("./res");
-
-  if(argc == 4)
-    fileout = string(argv[3]);
-
-  int mkdir = mkpath(fileout);
-
   auto property_list =
       cl::sycl::property_list{cl::sycl::property::queue::enable_profiling()};
   sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
@@ -74,7 +63,7 @@ int main(int argc, char **argv) {
     hilbertenvelope.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path2 = fileout + "frame_he_" + std::to_string(num_run) + ".png";
+    std::string file_path2 = "frame_he_" + std::to_string(num_run) + ".png";
     SaveImage(file_path2, hilbertenvelope.m_outputSize, hilbertenvelope.getResHost());
 #endif
 
@@ -82,7 +71,7 @@ int main(int argc, char **argv) {
     logcompressor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path3 = fileout + "frame_lc_" + std::to_string(num_run) + ".png";
+    std::string file_path3 = "frame_lc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path3, logcompressor.m_outputSize, logcompressor.getResHost());
 #endif
 
@@ -90,7 +79,7 @@ int main(int argc, char **argv) {
     scanconvertor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path4 = fileout + "frame_sc_" + std::to_string(num_run) + ".png";
+    std::string file_path4 = "frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path4, scanconvertor.m_outputSize, scanconvertor.getResHost());
 #endif
 

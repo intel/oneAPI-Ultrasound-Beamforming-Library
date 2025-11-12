@@ -7,7 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 class ScanConverter {
  public:

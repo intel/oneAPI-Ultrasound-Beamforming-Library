@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include "ScanConverter.h"
-#include "utility.hpp"
+#include "ultrasound_utility.h"
 
 using namespace std;
 
