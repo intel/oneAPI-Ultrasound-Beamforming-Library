@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     beamformer.SubmitKernel(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
 
 #if SAVE_IMG
-    std::string file_path1 = fileout + "frame_bf_" + std::to_string(num_run) + ".png";
+    std::string file_path1 = "frame_bf_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.m_outputSize, beamformer.getResHost());
 #endif
 
