@@ -8,7 +8,7 @@
 #include <limits>
 #include <string>
 #include <vector>
-#include "CL/sycl.hpp"
+#include "sycl/sycl.hpp"
 #include "vec.h"
 
 using namespace std;

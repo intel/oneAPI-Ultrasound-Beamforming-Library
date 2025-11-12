@@ -5,7 +5,6 @@
 #include "HilbertFirEnvelope.h"
 #include "LogCompressor.h"
 #include "ScanConverter.h"
-#include "shm.h"
 #include "sycl_help.h"
 
 #include <numeric>

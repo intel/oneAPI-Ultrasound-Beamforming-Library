@@ -8,7 +8,7 @@
 #ifndef __SYCL_HELP_HPP__
 #define __SYCL_HELP_HPP__
 
-#include "CL/sycl.hpp"
+#include "sycl/sycl.hpp"
 
 // #include "dpc_common.hpp"
 #define STB_IMAGE_IMPLEMENTATION

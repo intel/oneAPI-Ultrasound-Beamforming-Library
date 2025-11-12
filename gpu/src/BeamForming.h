@@ -4,7 +4,7 @@
 #ifndef ULTRASOUND_H
 #define ULTRASOUND_H
 
-#include <CL/sycl.hpp>
+#include "sycl/sycl.hpp"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -53,8 +53,8 @@ class Beamforming2D {
 
   float *s_dev = NULL;
 
-  uint Width = 0;
-  uint Height = 0;
+  uint32_t Width = 0;
+  uint32_t Height = 0;
 
   size_t numElements = 0;
   size_t numReceivedChannels = 0;

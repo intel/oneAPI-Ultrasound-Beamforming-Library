@@ -4,7 +4,7 @@
 #ifndef __LOGCOMPRESSOR_H__
 #define __LOGCOMPRESSOR_H__
 
-#include <CL/sycl.hpp>
+#include "sycl/sycl.hpp"
 #include <memory>
 #include "ultrasound_utility.h"
 
