@@ -1,17 +1,23 @@
-cmake_minimum_required(VERSION 4.20)
+cmake_minimum_required(VERSION 3.24)
 
-project(gpu_lib LANGUAGES CXX)
-
-# Try to locate a oneAPI/DPC++ compiler if the current compiler is not IntelLLVM.
+# Select Intel oneAPI compiler BEFORE project() if not already IntelLLVM.
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "IntelLLVM")
-    find_program(DPCPP_EXE NAMES dpcpp icpx icx)
-    if(DPCPP_EXE)
-        message(STATUS "Switching CMAKE_CXX_COMPILER to ${DPCPP_EXE}")
-        set(CMAKE_CXX_COMPILER ${DPCPP_EXE} CACHE FILEPATH "DPC++ compiler" FORCE)
+    if(WIN32)
+        find_program(INTEL_ONEAPI_CL NAMES icx-cl)
+        if(INTEL_ONEAPI_CL)
+            message(STATUS "Using Intel oneAPI CL compiler: ${INTEL_ONEAPI_CL}")
+            set(CMAKE_CXX_COMPILER ${INTEL_ONEAPI_CL} CACHE FILEPATH "Intel oneAPI CL compiler" FORCE)
+        endif()
     else()
-        message(WARNING "DPC++ compiler not found in PATH; ensure setvars.bat was run.")
+        find_program(INTEL_ONEAPI NAMES icx icpx)
+        if(INTEL_ONEAPI)
+            message(STATUS "Using Intel oneAPI compiler: ${INTEL_ONEAPI}")
+            set(CMAKE_CXX_COMPILER ${INTEL_ONEAPI} CACHE FILEPATH "Intel oneAPI compiler" FORCE)
+        endif()
     endif()
 endif()
+
+project(gpu_lib LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
