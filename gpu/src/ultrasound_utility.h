@@ -3,13 +3,11 @@
 #ifndef _ULTRASOUND_UTILITY_
 #define _ULTRASOUND_UTILITY_
 
-#include <chrono>
 #include <cmath>
 #include <iomanip>
 #include <limits>
 #include <string>
 #include <vector>
-#include <iostream>
 #include "sycl/sycl.hpp"
 #include "vec.h"
 
@@ -33,29 +31,6 @@ static float Report_time(const std::string& msg, sycl::event &e) {
       e.get_profiling_info<sycl::info::event_profiling::command_end>();
 
   float elapsed = static_cast<float>(time_end - time_start) / 1e6f;
-  std::cout << msg << elapsed << " milliseconds\n";
-  return elapsed;
-}
-
-static void Report_event_breakdown(const std::string& msg, sycl::event &e) {
-  sycl::cl_ulong submit =
-    e.get_profiling_info<sycl::info::event_profiling::command_submit>();
-  sycl::cl_ulong start =
-    e.get_profiling_info<sycl::info::event_profiling::command_start>();
-  sycl::cl_ulong end =
-    e.get_profiling_info<sycl::info::event_profiling::command_end>();
-
-  float queued_ms = static_cast<float>(start - submit) / 1e6f;
-  float exec_ms = static_cast<float>(end - start) / 1e6f;
-  std::cout << msg << "queued=" << queued_ms << " ms, exec=" << exec_ms
-      << " ms\n";
-}
-
-static float Report_host_duration(const std::string &msg,
-                  const std::chrono::high_resolution_clock::time_point &start,
-                  const std::chrono::high_resolution_clock::time_point &end) {
-  float elapsed =
-    std::chrono::duration<float, std::milli>(end - start).count();
   std::cout << msg << elapsed << " milliseconds\n";
   return elapsed;
 }

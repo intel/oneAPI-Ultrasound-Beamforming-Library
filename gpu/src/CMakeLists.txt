@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 option (USE_ZMC "Use Zero Memory Copy" ON)
-option(ENABLE_BEAMFORMING_DIAGNOSTICS "Collect beamforming profiling data" OFF)
 message(STATUS "USE_ZMC is ${USE_ZMC}")
 
 add_executable(easy_app
@@ -23,8 +22,8 @@ set(SYCL_BASE_FLAGS -fsycl -Wall)
 
 if(MSVC)
     target_compile_options(easy_app PRIVATE ${SYCL_BASE_FLAGS} /EHsc
-        $<$<CONFIG:Release>:/O2 /fp:fast>
-        $<$<CONFIG:RelWithDebInfo>:/O2 /fp:fast>)
+        $<$<CONFIG:Release>:/O3 /fp:fast>
+        $<$<CONFIG:RelWithDebInfo>:/O3 /fp:fast>)
     target_link_options(easy_app PRIVATE -fsycl)
 else()
     target_compile_options(easy_app PRIVATE ${SYCL_BASE_FLAGS}
@@ -38,8 +37,4 @@ target_compile_definitions(easy_app PRIVATE $<$<BOOL:${USE_ZMC}>:USE_ZMC>)
 
 if(CMAKE_BUILD_TYPE MATCHES "[Dd]ebug")
     target_compile_definitions(easy_app PRIVATE DEBUG_BUILD)
-endif()
-
-if(ENABLE_BEAMFORMING_DIAGNOSTICS)
-  target_compile_definitions(easy_app PRIVATE ENABLE_BEAMFORMING_DIAGNOSTICS)
 endif()
