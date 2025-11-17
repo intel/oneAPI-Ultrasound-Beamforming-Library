@@ -3,6 +3,33 @@
 
 #include "BeamForming.h"
 
+#include <array>
+#include <chrono>
+#include <cstdint>
+
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+// Define ENABLE_BEAMFORMING_DIAGNOSTICS to collect per-element counters and host timings.
+struct BeamformingCounterIndex {
+  static constexpr std::size_t totalElementVisits = 0;
+  static constexpr std::size_t apertureRejects = 1;
+  static constexpr std::size_t delayRejects = 2;
+  static constexpr std::size_t acceptedContributions = 3;
+  static constexpr std::size_t count = 4;
+};
+
+inline void BeamformingIncrementCounter(std::uint64_t *counters,
+                                        std::size_t idx) {
+  if (counters == nullptr) {
+    return;
+  }
+  sycl::atomic_ref<std::uint64_t, sycl::memory_order::relaxed,
+                   sycl::memory_scope::device,
+                   sycl::access::address_space::global_space>
+      ref(counters[idx]);
+  ref.fetch_add(1);
+}
+#endif
+
 template <typename T>
 inline T computeAperture_D(T F, T z) {
   return z / (2 * F);
@@ -421,7 +448,10 @@ static ResultType sampleBeamform2D(
     LocationType dirZ, LocationType aDT, LocationType depth,
     LocationType invMaxElementDistance, LocationType speedOfSound,
     LocationType dt, int32_t additionalOffset, const float *window_data,
-    const float window_scale) {
+    const float window_scale, std::uint64_t *counters = nullptr) {
+#ifndef ENABLE_BEAMFORMING_DIAGNOSTICS
+  (void)counters;
+#endif
   float sample = 0.0f;
   float weightAcum = 0.0f;
   int numAdds = 0;
@@ -432,7 +462,11 @@ static ResultType sampleBeamform2D(
        elemIdxX < txParams.lastActiveElementIndex.x; elemIdxX++) {
     int32_t channelIdx = elemIdxX % numReceivedChannels;
     LocationType x_elem = x_elemsDT[elemIdxX];
-  if (sycl::fabs(x_elem - scanline_x) <= aDT) {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+    BeamformingIncrementCounter(counters,
+                                BeamformingCounterIndex::totalElementVisits);
+#endif
+    if (sycl::fabs(x_elem - scanline_x) <= aDT) {
       float relativeIndex = (x_elem - scanline_x) * invMaxElementDistance;
       float relativeIndexClamped =
           sycl::min(sycl::max(relativeIndex, -1.0f), 1.0f);
@@ -456,10 +490,23 @@ static ResultType sampleBeamform2D(
                       txScanlineIdx * numReceivedChannels * numTimesteps] +
                delayf * RF[(delay + 1) + channelIdx * numTimesteps +
                            txScanlineIdx * numReceivedChannels * numTimesteps]);
-  } else if (delay < numTimesteps && delayf == 0.0f) {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::acceptedContributions);
+#endif
+        } else if (delay < numTimesteps && delayf == 0.0f) {
           sample +=
               weight * RF[delay + channelIdx * numTimesteps +
                           txScanlineIdx * numReceivedChannels * numTimesteps];
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::acceptedContributions);
+#endif
+        } else {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::delayRejects);
+#endif
         }
       } else {
         int32_t delay = static_cast<int32_t>(
@@ -471,9 +518,24 @@ static ResultType sampleBeamform2D(
           sample +=
               weight * RF[delay + channelIdx * numTimesteps +
                           txScanlineIdx * numReceivedChannels * numTimesteps];
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::acceptedContributions);
+#endif
+        } else {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::delayRejects);
+#endif
         }
       }
     }
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+    else {
+      BeamformingIncrementCounter(counters,
+                                  BeamformingCounterIndex::apertureRejects);
+    }
+#endif
   }
   if (numAdds > 0) {
     return sample / weightAcum * numAdds;
@@ -492,7 +554,10 @@ static ResultType sampleBeamform2D(
     LocationType dirY, LocationType dirZ, LocationType aDT, LocationType depth,
     LocationType invMaxElementDistance, LocationType speedOfSound,
     LocationType dt, int32_t additionalOffset, const float *window_data,
-    const float window_scale) {
+    const float window_scale, std::uint64_t *counters = nullptr) {
+#ifndef ENABLE_BEAMFORMING_DIAGNOSTICS
+  (void)counters;
+#endif
   float sample = 0.0f;
   float weightAcum = 0.0f;
   int numAdds = 0;
@@ -503,7 +568,11 @@ static ResultType sampleBeamform2D(
        elemIdxX < txParams.lastActiveElementIndex.x; elemIdxX++) {
     int32_t channelIdx = elemIdxX % numReceivedChannels;
     LocationType x_elem = x_elemsDT[elemIdxX];
-  if (sycl::fabs(x_elem - scanline_x) <= aDT) {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+    BeamformingIncrementCounter(counters,
+                                BeamformingCounterIndex::totalElementVisits);
+#endif
+    if (sycl::fabs(x_elem - scanline_x) <= aDT) {
       float relativeIndex = (x_elem - scanline_x) * invMaxElementDistance;
       float relativeIndexClamped =
           sycl::min(sycl::max(relativeIndex, -1.0f), 1.0f);
@@ -527,10 +596,23 @@ static ResultType sampleBeamform2D(
                       txScanlineIdx * numReceivedChannels * numTimesteps] +
                delayf * RF[(delay + 1) + channelIdx * numTimesteps +
                            txScanlineIdx * numReceivedChannels * numTimesteps]);
-  } else if (delay < numTimesteps && delayf == 0.0f) {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::acceptedContributions);
+#endif
+        } else if (delay < numTimesteps && delayf == 0.0f) {
           sample +=
               weight * RF[delay + channelIdx * numTimesteps +
                           txScanlineIdx * numReceivedChannels * numTimesteps];
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::acceptedContributions);
+#endif
+        } else {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::delayRejects);
+#endif
         }
       } else {
         int32_t delay = static_cast<int32_t>(
@@ -542,9 +624,24 @@ static ResultType sampleBeamform2D(
           sample +=
               weight * RF[delay + channelIdx * numTimesteps +
                           txScanlineIdx * numReceivedChannels * numTimesteps];
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::acceptedContributions);
+#endif
+        } else {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+          BeamformingIncrementCounter(
+              counters, BeamformingCounterIndex::delayRejects);
+#endif
         }
       }
     }
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+    else {
+      BeamformingIncrementCounter(counters,
+                                  BeamformingCounterIndex::apertureRejects);
+    }
+#endif
   }
   if (numAdds > 0) {
     return sample / weightAcum * numAdds;
@@ -564,7 +661,7 @@ void rxBeamformingDTSPACEKernel(
     const LocationType *__restrict__ x_elemsDT, LocationType speedOfSound,
     LocationType dt, uint32_t additionalOffset, LocationType F,
     const float *window_data, const float window_scale,
-    ResultType *__restrict__ s,
+  ResultType *__restrict__ s, std::uint64_t *__restrict__ counters = nullptr,
     sycl::nd_item<3> &item_ct1) {
   int r = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
           item_ct1.get_local_id(1);  //@suppress("Symbol is not resolved")
@@ -624,7 +721,7 @@ void rxBeamformingDTSPACEKernel(
             txParams, RF, numTransducerElements, numReceivedChannels,
             numTimesteps, x_elemsDT, scanline_x, dirX, dirY, dirZ, aDT, d,
             invMaxElementDistance, speedOfSound, dt, additionalOffset,
-            window_data, window_scale);
+          window_data, window_scale, counters);
 
         if (interpolateBetweenTransmits) {
           sInterp += static_cast<float>(scanline.txWeights[k]) * sLocal;
@@ -648,7 +745,8 @@ void rxBeamformingDTSPACEKernel(
     const LocationType *__restrict__ x_elemsDT, LocationType speedOfSound,
     LocationType dt, uint32_t additionalOffset, LocationType F,
     const float *window_data, const float window_scale,
-    ResultType *__restrict__ s, sycl::nd_item<3> &item_ct1) {
+  ResultType *__restrict__ s, std::uint64_t *__restrict__ counters = nullptr,
+  sycl::nd_item<3> &item_ct1) {
   int r = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
           item_ct1.get_local_id(1);  //@suppress("Symbol is not resolved")
                                      //@suppress("Field cannot be resolved")
@@ -707,7 +805,7 @@ void rxBeamformingDTSPACEKernel(
             txParams, RF, numTransducerElements, numReceivedChannels,
             numTimesteps, x_elemsDT, scanline_x, dirX, dirY, dirZ, aDT, d,
             invMaxElementDistance, speedOfSound, dt, additionalOffset,
-            window_data, window_scale);
+          window_data, window_scale, counters);
 
         if (interpolateBetweenTransmits) {
           sInterp += static_cast<float>(scanline.txWeights[k]) * sLocal;
@@ -1075,6 +1173,9 @@ int Beamforming2D::copy_data2dev() {
 }
 
 void Beamforming2D::SubmitKernel(int16_t* raw_ptr, size_t len) {
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+  auto hostStart = std::chrono::high_resolution_clock::now();
+#endif
   sycl::range<3> blockSize(1, 256, 1);
   sycl::range<3> gridSize(
       1,
@@ -1111,10 +1212,26 @@ void Beamforming2D::SubmitKernel(int16_t* raw_ptr, size_t len) {
   sycl::buffer p_RFdata_buf(raw_ptr, RF_len, props);
 #endif
 
+  std::uint64_t *beamformingCountersDev = nullptr;
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+  std::array<std::uint64_t, BeamformingCounterIndex::count>
+      beamformingCountersHost{};
+  beamformingCountersDev = sycl::malloc_device<std::uint64_t>(
+      BeamformingCounterIndex::count, q);
+  q.fill(beamformingCountersDev, 0ull,
+         BeamformingCounterIndex::count)
+      .wait();
+  std::chrono::high_resolution_clock::time_point hostPreSubmit;
+  std::chrono::high_resolution_clock::time_point hostPostSubmit;
+  std::chrono::high_resolution_clock::time_point hostAfterWait;
+  hostPreSubmit = std::chrono::high_resolution_clock::now();
+#endif
+
   sycl::event e = q.submit([&](sycl::handler &cgh) {
 #ifdef USE_ZMC
     sycl::accessor p_RFdata_dev(p_RFdata_buf, cgh, sycl::read_write);
 #endif
+    std::uint64_t *profileCountersDev = beamformingCountersDev;
     cgh.parallel_for<class beamformer2D>(
         sycl::nd_range<3>(gridSize * blockSize, blockSize),
         [=](sycl::nd_item<3> item_ct1) {
@@ -1123,13 +1240,48 @@ void Beamforming2D::SubmitKernel(int16_t* raw_ptr, size_t len) {
               p_numTxScanlines, p_numRxScanlines, p_rxScanlines_dev,
               p_rxNumDepths, p_rxDepths_dev, p_rxElementXs_dev,
               p_speedOfSoundMMperS, p_dt, p_additionalOffset, p_fNumber,
-              p_window_data_dev, p_window_scale, p_s_dev, item_ct1);
+              p_window_data_dev, p_window_scale, p_s_dev, profileCountersDev,
+              item_ct1);
         });
   });
 
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+  hostPostSubmit = std::chrono::high_resolution_clock::now();
+#endif
+
   e.wait();
 
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+  hostAfterWait = std::chrono::high_resolution_clock::now();
+#endif
+
   comsuming_time.push_back(Report_time(std::string("Beamforming kernel: "), e)); 
+#ifdef ENABLE_BEAMFORMING_DIAGNOSTICS
+  Report_event_breakdown(std::string("Beamforming kernel breakdown: "), e);
+  Report_host_duration(std::string("Beamforming host prep: "), hostStart,
+                       hostPreSubmit);
+  Report_host_duration(std::string("Beamforming host submit overhead: "),
+                       hostPreSubmit, hostPostSubmit);
+  Report_host_duration(std::string("Beamforming host wait: "), hostPostSubmit,
+                       hostAfterWait);
+  q.memcpy(beamformingCountersHost.data(), beamformingCountersDev,
+           sizeof(std::uint64_t) * BeamformingCounterIndex::count)
+      .wait();
+  std::cout << "Beamforming counters total visits: "
+            << beamformingCountersHost[BeamformingCounterIndex::totalElementVisits]
+            << "\n";
+  std::cout << "Beamforming counters aperture rejects: "
+            << beamformingCountersHost[BeamformingCounterIndex::apertureRejects]
+            << "\n";
+  std::cout << "Beamforming counters delay rejects: "
+            << beamformingCountersHost[BeamformingCounterIndex::delayRejects]
+            << "\n";
+  std::cout
+      << "Beamforming counters accepted contributions: "
+      << beamformingCountersHost[BeamformingCounterIndex::acceptedContributions]
+      << "\n";
+  sycl::free(beamformingCountersDev, q);
+#endif
 }
 
 int Beamforming2D::read_one_frame2dev(int16_t* raw_ptr, size_t len) {

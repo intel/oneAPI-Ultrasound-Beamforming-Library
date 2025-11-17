@@ -17,14 +17,21 @@ add_executable(easy_app
     sycl_help.h
     ultrasound_utility.h
     vec.h)
-
 # Apply SYCL compile & link flags directly to the target (previous flags were never used).
+set(SYCL_BASE_FLAGS -fsycl -Wall)
+
 if(MSVC)
-    target_compile_options(easy_app PRIVATE -fsycl -Wall /EHsc)
+    target_compile_options(easy_app PRIVATE ${SYCL_BASE_FLAGS} /EHsc
+        $<$<CONFIG:Release>:/O2 /fp:fast>
+        $<$<CONFIG:RelWithDebInfo>:/O2 /fp:fast>)
+    target_link_options(easy_app PRIVATE -fsycl)
 else()
-    target_compile_options(easy_app PRIVATE -fsycl -Wall)
+    target_compile_options(easy_app PRIVATE ${SYCL_BASE_FLAGS}
+        $<$<CONFIG:Release>:-O3 -ffast-math>
+        $<$<CONFIG:RelWithDebInfo>:-O3>)
+    target_link_options(easy_app PRIVATE -fsycl
+        $<$<CONFIG:Release>:-fsycl-device-code-split=per_kernel>)
 endif()
-target_link_options(easy_app PRIVATE -fsycl)
 
 target_compile_definitions(easy_app PRIVATE $<$<BOOL:${USE_ZMC}>:USE_ZMC>)
 
