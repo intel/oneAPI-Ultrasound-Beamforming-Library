@@ -661,7 +661,7 @@ void rxBeamformingDTSPACEKernel(
     const LocationType *__restrict__ x_elemsDT, LocationType speedOfSound,
     LocationType dt, uint32_t additionalOffset, LocationType F,
     const float *window_data, const float window_scale,
-  ResultType *__restrict__ s, std::uint64_t *__restrict__ counters = nullptr,
+  ResultType *__restrict__ s, std::uint64_t *__restrict__ counters,
     sycl::nd_item<3> &item_ct1) {
   int r = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
           item_ct1.get_local_id(1);  //@suppress("Symbol is not resolved")
@@ -745,7 +745,7 @@ void rxBeamformingDTSPACEKernel(
     const LocationType *__restrict__ x_elemsDT, LocationType speedOfSound,
     LocationType dt, uint32_t additionalOffset, LocationType F,
     const float *window_data, const float window_scale,
-  ResultType *__restrict__ s, std::uint64_t *__restrict__ counters = nullptr,
+  ResultType *__restrict__ s, std::uint64_t *__restrict__ counters,
   sycl::nd_item<3> &item_ct1) {
   int r = item_ct1.get_local_range().get(1) * item_ct1.get_group(1) +
           item_ct1.get_local_id(1);  //@suppress("Symbol is not resolved")
