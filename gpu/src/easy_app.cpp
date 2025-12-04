@@ -7,6 +7,7 @@
 #include "ScanConverter.h"
 #include "sycl_help.h"
 
+#include <algorithm>
 #include <numeric>
 #include <cstdlib>
 
@@ -17,10 +18,28 @@ const size_t raw_len = 128 * 64 * 2337;
 
 #define SAVE_IMG 1
 
-const char* fileparam = "linearProbe_IPCAI_128-2.mock";
-const char* filein = "linearProbe_IPCAI_128-2_0.raw";
-
 int main(int argc, char **argv) {
+  if (argc < 3) {
+    std::cerr << "Usage: " << argv[0]
+              << " <param_file> <raw_file> [run_steps] [output_dir]" << std::endl;
+    return 1;
+  }
+
+  const char *fileparam = argv[1];
+  const char *filein = argv[2];
+
+  int run_steps = 8;
+  if (argc >= 4 && argv[3] && argv[3][0] != '\0') {
+    run_steps = std::max(1, atoi(argv[3]));
+  }
+
+  string fileout("./res");
+  if (argc >= 5 && argv[4] && argv[4][0] != '\0') {
+    fileout = string(argv[4]);
+  }
+
+  int mkdir = mkpath(fileout);
+
   auto property_list =
       sycl::property_list{sycl::property::queue::enable_profiling()};
   sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
@@ -53,13 +72,13 @@ int main(int argc, char **argv) {
 
   size_t num_run = 0;
   size_t raw_len = params->numReceivedChannels * params->numSamples * params->numTxScanlines;
-  size_t run_steps = 8;
+
   while(num_run < run_steps) {
     beamformer.read_one_frame2dev(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
     beamformer.SubmitKernel(beamformer.RFdata + raw_len * (num_run % 8), raw_len);
 
 #if SAVE_IMG
-    std::string file_path1 = "frame_bf_" + std::to_string(num_run) + ".png";
+    std::string file_path1 = fileout + "/frame_" + std::to_string(num_run) + ".png";
     SaveImage(file_path1, beamformer.m_outputSize, beamformer.getResHost());
 #endif
 
@@ -67,7 +86,7 @@ int main(int argc, char **argv) {
     hilbertenvelope.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path2 = "frame_he_" + std::to_string(num_run) + ".png";
+    std::string file_path2 = fileout + "/frame_he_" + std::to_string(num_run) + ".png";
     SaveImage(file_path2, hilbertenvelope.m_outputSize, hilbertenvelope.getResHost());
 #endif
 
@@ -75,7 +94,7 @@ int main(int argc, char **argv) {
     logcompressor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path3 = "frame_lc_" + std::to_string(num_run) + ".png";
+    std::string file_path3 = fileout + "/frame_lc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path3, logcompressor.m_outputSize, logcompressor.getResHost());
 #endif
 
@@ -83,7 +102,7 @@ int main(int argc, char **argv) {
     scanconvertor.SubmitKernel();
 
 #if SAVE_IMG
-    std::string file_path4 = "frame_sc_" + std::to_string(num_run) + ".png";
+    std::string file_path4 = fileout + "/frame_sc_" + std::to_string(num_run) + ".png";
     SaveImage(file_path4, scanconvertor.m_outputSize, scanconvertor.getResHost());
 #endif
 
