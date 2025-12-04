@@ -8,8 +8,9 @@
 #include "sycl_help.h"
 
 #include <algorithm>
-#include <numeric>
 #include <cstdlib>
+#include <filesystem>
+#include <numeric>
 
 using namespace std;
 using namespace sycl;
@@ -38,7 +39,15 @@ int main(int argc, char **argv) {
     fileout = string(argv[4]);
   }
 
-  int mkdir = mkpath(fileout);
+  try {
+    if (!std::filesystem::exists(fileout)) {
+      std::filesystem::create_directories(fileout);
+    }
+  } catch (const std::filesystem::filesystem_error &e) {
+    std::cerr << "Failed to create output directory '" << fileout
+              << "': " << e.what() << std::endl;
+    return 1;
+  }
 
   auto property_list =
       sycl::property_list{sycl::property::queue::enable_profiling()};
