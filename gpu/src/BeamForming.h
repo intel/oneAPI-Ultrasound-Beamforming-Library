@@ -19,6 +19,9 @@ class Beamforming2D {
  public:
   Beamforming2D(sycl::queue &in_q);
 
+  Beamforming2D(const Beamforming2D &) = delete;
+  Beamforming2D &operator=(const Beamforming2D &) = delete;
+
   ~Beamforming2D(void);
 
   int GetInputImage(const char *Paramfilename, const char *Inputfilename, RawParam* &Params);

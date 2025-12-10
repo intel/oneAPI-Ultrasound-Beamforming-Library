@@ -23,6 +23,8 @@ class ScanConverter {
   ScanConverter(sycl::queue &hq, uint8_t* mask,
                 uint32_t* sampleIdx, float* weightX, float* weightY,
                 vec3s &imageSize, RawParam *p_Params);
+  ScanConverter(const ScanConverter &) = delete;
+  ScanConverter &operator=(const ScanConverter &) = delete;
   ~ScanConverter();
 
   template <typename InputType, typename OutputType>

@@ -1119,7 +1119,7 @@ void Beamforming2D::SubmitKernel(int16_t* raw_ptr, size_t len) {
         sycl::nd_range<3>(gridSize * blockSize, blockSize),
         [=](sycl::nd_item<3> item_ct1) {
           rxBeamformingDTSPACEKernel<true, false, int16_t, float, float>(
-              p_numElements, p_numReceivedChannels, p_numSamples, p_RFdata_dev,
+              p_numElements, p_numReceivedChannels, p_numSamples, std::move(p_RFdata_dev),
               p_numTxScanlines, p_numRxScanlines, p_rxScanlines_dev,
               p_rxNumDepths, p_rxDepths_dev, p_rxElementXs_dev,
               p_speedOfSoundMMperS, p_dt, p_additionalOffset, p_fNumber,

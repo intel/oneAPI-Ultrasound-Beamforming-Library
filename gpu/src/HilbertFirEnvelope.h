@@ -233,6 +233,8 @@ class HilbertFirEnvelope {
  public:
   typedef float WorkType;
   HilbertFirEnvelope(sycl::queue &in_q, RawParam *params);
+  HilbertFirEnvelope(const HilbertFirEnvelope &) = delete;
+  HilbertFirEnvelope &operator=(const HilbertFirEnvelope &) = delete;
   ~HilbertFirEnvelope();
 
   void copydata(float *host_addr, size_t len = 2000 * 255);

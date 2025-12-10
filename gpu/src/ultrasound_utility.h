@@ -40,7 +40,7 @@ constexpr inline T squ(const T& x) {
   return x * x;
 }
 
-static void malloc_mem_log(std::string s) {
+static void malloc_mem_log(const std::string &s) {
   std::cout << "Malloc memory in " << s << " fail.\n";
   exit(-1);
 }

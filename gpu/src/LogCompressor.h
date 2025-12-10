@@ -17,6 +17,8 @@ class LogCompressor {
   void compress(vec3s &size, float dynamicRange, float scale, float inMax);
   LogCompressor(float* &input, sycl::queue &in_q, RawParam* &param);
   LogCompressor(sycl::queue &in_q, RawParam* &param);
+  LogCompressor(const LogCompressor &) = delete;
+  LogCompressor &operator=(const LogCompressor &) = delete;
   void getInput(float *input);
   ~LogCompressor();
   void SubmitKernel();

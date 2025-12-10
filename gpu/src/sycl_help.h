@@ -24,7 +24,7 @@
 
 using namespace std;
 
-void stb_write_img_u16_t(const std::string img_name, size_t h, size_t w,
+void stb_write_img_u16_t(const std::string &img_name, size_t h, size_t w,
                          uint16_t *&r_input, uint16_t *&g_input,
                          uint16_t *&b_input) {
   // we need to store r, g, b data into on array.
@@ -50,7 +50,7 @@ void stb_write_img_u16_t(const std::string img_name, size_t h, size_t w,
   delete[] data;
 }
 
-void stb_write_img_u16_single_channel(const std::string img_name, size_t h,
+void stb_write_img_u16_single_channel(const std::string &img_name, size_t h,
                                       size_t w, uint16_t *&r_input) {
   // we need to store r, g, b data into on array.
   uint8_t *data = new uint8_t[w * h];
@@ -73,7 +73,7 @@ void stb_write_img_u16_single_channel(const std::string img_name, size_t h,
   delete[] data;
 }
 
-void stb_write_img_u8_t(const std::string img_name, size_t h, size_t w,
+void stb_write_img_u8_t(const std::string &img_name, size_t h, size_t w,
                         uint8_t *&r_input, uint8_t *&g_input,
                         uint8_t *&b_input) {
   // we need to store r, g, b data into on array.
