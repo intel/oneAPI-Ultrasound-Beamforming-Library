@@ -22,7 +22,7 @@ const size_t raw_len = 128 * 64 * 2337;
 int main(int argc, char **argv) {
   if (argc < 3) {
     std::cerr << "Usage: " << argv[0]
-              << " <param_file> <raw_file> [output_dir] [run_steps]" << std::endl;
+              << " <param_file> <raw_file> [output_dir]" << std::endl;
     return 1;
   }
 
@@ -35,9 +35,6 @@ int main(int argc, char **argv) {
   }
 
   int run_steps = 8;
-  if (argc >= 5 && argv[4] && argv[4][0] != '\0') {
-    run_steps = std::max(1, atoi(argv[4]));
-  }
 
   try {
     if (!std::filesystem::exists(fileout)) {
