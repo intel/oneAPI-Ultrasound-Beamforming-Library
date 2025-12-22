@@ -60,7 +60,7 @@ int run_application(int argc, char **argv) {
 
   auto property_list =
       sycl::property_list{sycl::property::queue::enable_profiling()};
-  sycl::queue in_q = sycl::queue(gpu_selector{}, property_list);
+  sycl::queue in_q{sycl::gpu_selector_v, property_list};
   std::cout << std::endl
             << "Selected device: "
             << in_q.get_device().get_info<sycl::info::device::name>()

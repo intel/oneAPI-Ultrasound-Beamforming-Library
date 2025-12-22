@@ -13,8 +13,8 @@
 
 using namespace std;
 
-#define __FLT_MAX__ 3.40282347e+38F
-#define FLT_MAX __FLT_MAX__
+// #define __FLT_MAX__ 3.40282347e+38F
+// #define FLT_MAX __FLT_MAX__
 
 static float AvgVec(std::vector<float> &vec) {
   float res = 0;
@@ -24,10 +24,10 @@ static float AvgVec(std::vector<float> &vec) {
 } 
 
 static float Report_time(const std::string& msg, sycl::event &e) {
-  sycl::cl_ulong time_start =
+  std::uint64_t time_start =
       e.get_profiling_info<sycl::info::event_profiling::command_start>();
 
-  sycl::cl_ulong time_end =
+  std::uint64_t time_end =
       e.get_profiling_info<sycl::info::event_profiling::command_end>();
 
   float elapsed = static_cast<float>(time_end - time_start) / 1e6f;

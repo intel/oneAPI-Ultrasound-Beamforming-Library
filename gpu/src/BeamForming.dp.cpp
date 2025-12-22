@@ -1088,7 +1088,7 @@ void Beamforming2D::SubmitKernel(int16_t* raw_ptr, size_t len) {
   size_t p_numSamples = numSamples;
   size_t p_numTxScanlines = numTxScanlines;
   size_t p_numRxScanlines = numRxScanlines;
-  struct ScanlineRxParameters3D *p_rxScanlines_dev = rxScanlines_dev;
+  ScanlineRxParameters3D *p_rxScanlines_dev = rxScanlines_dev;
   size_t p_rxNumDepths = rxNumDepths;
 
   float *p_rxDepths_dev = rxDepths_dev;
